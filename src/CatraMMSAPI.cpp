@@ -105,6 +105,7 @@ CatraMMSAPI::CatraMMSAPI(json configurationRoot)
 
 	{
 		videoFileFormats.push_back("mp4");
+		videoFileFormats.push_back("m4v");
 		videoFileFormats.push_back("mkv");
 		videoFileFormats.push_back("mov");
 		videoFileFormats.push_back("ts");
@@ -187,7 +188,7 @@ void CatraMMSAPI::login(string userName, string password, string clientIPAddress
 			"httpPostStringAndGetJson"
 			", url: {}"
 			", body: {}",
-			url, JSONUtils::toString(bodyRoot)
+			url, "..." // JSONUtils::toString(bodyRoot) commentato per evitare di mostrare la password
 		);
 		json mmsInfoRoot = CurlWrapper::httpPostStringAndGetJson(
 			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), JSONUtils::toString(bodyRoot)
