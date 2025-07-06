@@ -75,6 +75,7 @@ class CatraMMSAPI
 		string languageCode;
 		string timezone;
 		json preferences;
+		json externalDeliveries;
 		time_t creationDate;
 		string apiKey;
 		bool owner;
@@ -159,6 +160,7 @@ class CatraMMSAPI
 		EncodingProfileVideo videoDetails;
 		EncodingProfileAudio audioDetails;
 		EncodingProfileImage imageDetails;
+		json encodingProfileRoot;
 	};
 	struct Encoder
 	{
@@ -188,6 +190,20 @@ class CatraMMSAPI
 
 		vector<EncodingProfile> encodingProfiles;
 	};
+	struct RTMPChannelConf
+	{
+		int64_t confKey;
+		string label;
+		string rtmpURL;
+		string streamName;
+		string userName;
+		string password;
+		string playURL;
+		string type;
+		long outputIndex;
+		int64_t reservedByIngestionJobKey;
+		string configurationLabel;
+	};
 
 	CatraMMSAPI(json configurationRoot);
 	~CatraMMSAPI() = default;
@@ -204,6 +220,7 @@ class CatraMMSAPI
 	vector<EncodingProfile> getEncodingProfiles(string contentType, int64_t encodingProfileKey = -1, string label = "", bool cacheAllowed = true);
 	vector<EncodersPool> getEncodersPool(bool cacheAllowed = true);
 	vector<EncodingProfilesSet> getEncodingProfilesSets(string contentType, bool cacheAllowed = true);
+	vector<RTMPChannelConf> getRTMPChannelConf(string label = "", bool labelLike = true, string type = "", bool cacheAllowed = true);
 	pair<IngestionResult, vector<IngestionResult>> ingestionWorkflow(json workflowRoot);
 	void ingestionBinary(int64_t addContentIngestionJobKey, string pathFileName, function<bool(int, int)> chunkCompleted);
 
@@ -232,6 +249,7 @@ class CatraMMSAPI
 	EncodingProfilesSet fillEncodingProfilesSet(json encodingProfilesSetRoot, bool deep);
 	EncodersPool fillEncodersPool(json encodersPoolRoot);
 	Encoder fillEncoder(json encoderRoot);
+	RTMPChannelConf fillRTMPChannelConf(json rtmpChannelConfRoot);
 };
 
 #endif

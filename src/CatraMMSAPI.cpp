@@ -508,6 +508,70 @@ vector<CatraMMSAPI::EncodersPool> CatraMMSAPI::getEncodersPool(bool cacheAllowed
 	}
 }
 
+vector<CatraMMSAPI::RTMPChannelConf> CatraMMSAPI::getRTMPChannelConf(string label, bool labelLike, string type, bool cacheAllowed)
+{
+	string api = "getRTMPChannelConf";
+
+	if (!_loginSuccessful)
+	{
+		string errorMessage = "login API was not called yet";
+		SPDLOG_ERROR(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	try
+	{
+		string url = std::format("{}://{}:{}/catramms/1.0.1/conf/cdn/rtmp/channel", _apiProtocol, _apiHostname, _apiPort);
+		char queryChar = '?';
+		if (!label.empty())
+		{
+			url += std::format("{}label={}", queryChar, CurlWrapper::escape(label));
+			queryChar = '&';
+		}
+		url += std::format("{}labelLike={}", queryChar, labelLike);
+		queryChar = '&';
+		if (!type.empty())
+			url += std::format("{}type={}", queryChar, CurlWrapper::escape(label));
+		url += std::format("{}should_bypass_cache={}", queryChar, cacheAllowed);
+
+		SPDLOG_INFO(
+			"httpGetJson"
+			", url: {}"
+			", _outputToBeCompressed: {}",
+			url, _outputToBeCompressed
+		);
+		vector<string> otherHeaders;
+		if (_outputToBeCompressed)
+			otherHeaders.push_back("X-ResponseBodyCompressed: true");
+		json mmsInfoRoot = CurlWrapper::httpGetJson(
+			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
+			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
+		);
+
+		json responseRoot = JSONUtils::asJson(mmsInfoRoot, "response");
+		json rtmpChannelConfRoot = JSONUtils::asJson(responseRoot, "rtmpChannelConf", json::array());
+
+		vector<RTMPChannelConf> rtmpChannelConfs;
+
+		for (auto &[keyRoot, valRoot] : rtmpChannelConfRoot.items())
+			rtmpChannelConfs.push_back(fillRTMPChannelConf(valRoot));
+
+		return rtmpChannelConfs;
+	}
+	catch (exception &e)
+	{
+		string errorMessage = std::format(
+			"{} failed"
+			", exception: {}",
+			api, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		throw;
+	}
+}
+
 CatraMMSAPI::UserProfile CatraMMSAPI::fillUserProfile(json userProfileRoot)
 {
 	try
@@ -563,6 +627,21 @@ CatraMMSAPI::WorkspaceDetails CatraMMSAPI::fillWorkspaceDetails(json workspacede
 			catch (exception &e)
 			{
 				SPDLOG_ERROR("Wrong workspaceDetails.preferences format: {}", JSONUtils::asString(workspacedetailsRoot, "preferences", ""));
+			}
+		}
+
+		workspaceDetails.externalDeliveries = nullptr;
+		if (!JSONUtils::asString(workspacedetailsRoot, "externalDeliveries", "").empty())
+		{
+			try
+			{
+				workspaceDetails.externalDeliveries = JSONUtils::toJson(JSONUtils::asString(workspacedetailsRoot, "externalDeliveries", ""));
+			}
+			catch (exception &e)
+			{
+				SPDLOG_ERROR(
+					"Wrong workspaceDetails.externalDeliveries format: {}", JSONUtils::asString(workspacedetailsRoot, "externalDeliveries", "")
+				);
 			}
 		}
 
@@ -632,13 +711,13 @@ CatraMMSAPI::EncodingProfile CatraMMSAPI::fillEncodingProfile(json encodingProfi
 		encodingProfile.label = JSONUtils::asString(encodingProfileRoot, "label", "");
 		encodingProfile.contentType = JSONUtils::asString(encodingProfileRoot, "contentType", "");
 
-		json profileInfoRoot = JSONUtils::asJson(encodingProfileRoot, "profile");
-		encodingProfile.fileFormat = JSONUtils::asString(profileInfoRoot, "fileFormat", "");
+		encodingProfile.encodingProfileRoot = JSONUtils::asJson(encodingProfileRoot, "profile");
+		encodingProfile.fileFormat = JSONUtils::asString(encodingProfile.encodingProfileRoot, "fileFormat", "");
 		if (deep)
 		{
 			if (encodingProfile.contentType == "video")
 			{
-				json videoInfoRoot = JSONUtils::asJson(profileInfoRoot, "video");
+				json videoInfoRoot = JSONUtils::asJson(encodingProfile.encodingProfileRoot, "video");
 				encodingProfile.videoDetails.codec = JSONUtils::asString(videoInfoRoot, "codec", "");
 				encodingProfile.videoDetails.profile = JSONUtils::asString(videoInfoRoot, "profile", "");
 				encodingProfile.videoDetails.twoPasses = JSONUtils::asBool(videoInfoRoot, "twoPasses", false);
@@ -663,7 +742,7 @@ CatraMMSAPI::EncodingProfile CatraMMSAPI::fillEncodingProfile(json encodingProfi
 					}
 				}
 
-				json audioInfoRoot = JSONUtils::asJson(profileInfoRoot, "audio");
+				json audioInfoRoot = JSONUtils::asJson(encodingProfile.encodingProfileRoot, "audio");
 				encodingProfile.audioDetails.codec = JSONUtils::asString(audioInfoRoot, "codec", "");
 				encodingProfile.audioDetails.otherOutputParameters = JSONUtils::asString(audioInfoRoot, "otherOutputParameters", "");
 				encodingProfile.audioDetails.channelsNumber = JSONUtils::asInt(audioInfoRoot, "channelsNumber", -1);
@@ -676,7 +755,7 @@ CatraMMSAPI::EncodingProfile CatraMMSAPI::fillEncodingProfile(json encodingProfi
 			}
 			else if (encodingProfile.contentType == "audio")
 			{
-				json audioInfoRoot = JSONUtils::asJson(profileInfoRoot, "audio");
+				json audioInfoRoot = JSONUtils::asJson(encodingProfile.encodingProfileRoot, "audio");
 				encodingProfile.audioDetails.codec = JSONUtils::asString(audioInfoRoot, "codec", "");
 				encodingProfile.audioDetails.otherOutputParameters = JSONUtils::asString(audioInfoRoot, "otherOutputParameters", "");
 				encodingProfile.audioDetails.channelsNumber = JSONUtils::asInt(audioInfoRoot, "channelsNumber", -1);
@@ -689,7 +768,7 @@ CatraMMSAPI::EncodingProfile CatraMMSAPI::fillEncodingProfile(json encodingProfi
 			}
 			else if (encodingProfile.contentType == "image")
 			{
-				json imageInfoRoot = JSONUtils::asJson(profileInfoRoot, "image");
+				json imageInfoRoot = JSONUtils::asJson(encodingProfile.encodingProfileRoot, "image");
 				encodingProfile.imageDetails.width = JSONUtils::asInt(imageInfoRoot, "width", -1);
 				encodingProfile.imageDetails.height = JSONUtils::asInt(imageInfoRoot, "height", -1);
 				encodingProfile.imageDetails.aspectRatio = JSONUtils::asBool(imageInfoRoot, "aspectRatio", -1);
@@ -792,6 +871,37 @@ CatraMMSAPI::Encoder CatraMMSAPI::fillEncoder(json encoderRoot)
 	{
 		SPDLOG_ERROR(
 			"fillEncoder failed"
+			", exception: {}",
+			e.what()
+		);
+		throw;
+	}
+}
+
+CatraMMSAPI::RTMPChannelConf CatraMMSAPI::fillRTMPChannelConf(json rtmpChannelConfRoot)
+{
+	try
+	{
+		CatraMMSAPI::RTMPChannelConf rtmpChannelConf;
+
+		rtmpChannelConf.confKey = JSONUtils::asInt64(rtmpChannelConfRoot, "confKey", -1);
+		rtmpChannelConf.label = JSONUtils::asString(rtmpChannelConfRoot, "label", "");
+		rtmpChannelConf.rtmpURL = JSONUtils::asString(rtmpChannelConfRoot, "rtmpURL", "");
+		rtmpChannelConf.streamName = JSONUtils::asString(rtmpChannelConfRoot, "streamName", "");
+		rtmpChannelConf.userName = JSONUtils::asString(rtmpChannelConfRoot, "userName", "");
+		rtmpChannelConf.password = JSONUtils::asString(rtmpChannelConfRoot, "password", "");
+		rtmpChannelConf.playURL = JSONUtils::asString(rtmpChannelConfRoot, "playURL", "");
+		rtmpChannelConf.type = JSONUtils::asString(rtmpChannelConfRoot, "type", "");
+		rtmpChannelConf.outputIndex = JSONUtils::asInt64(rtmpChannelConfRoot, "outputIndex", -1);
+		rtmpChannelConf.reservedByIngestionJobKey = JSONUtils::asInt64(rtmpChannelConfRoot, "reservedByIngestionJobKey", -1);
+		rtmpChannelConf.configurationLabel = JSONUtils::asString(rtmpChannelConfRoot, "configurationLabel", "");
+
+		return rtmpChannelConf;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"fillRTMPChannelConf failed"
 			", exception: {}",
 			e.what()
 		);
