@@ -572,6 +572,198 @@ vector<CatraMMSAPI::RTMPChannelConf> CatraMMSAPI::getRTMPChannelConf(string labe
 	}
 }
 
+vector<CatraMMSAPI::SRTChannelConf> CatraMMSAPI::getSRTChannelConf(string label, bool labelLike, string type, bool cacheAllowed)
+{
+	string api = "getSRTChannelConf";
+
+	if (!_loginSuccessful)
+	{
+		string errorMessage = "login API was not called yet";
+		SPDLOG_ERROR(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	try
+	{
+		string url = std::format("{}://{}:{}/catramms/1.0.1/conf/cdn/srt/channel", _apiProtocol, _apiHostname, _apiPort);
+		char queryChar = '?';
+		if (!label.empty())
+		{
+			url += std::format("{}label={}", queryChar, CurlWrapper::escape(label));
+			queryChar = '&';
+		}
+		url += std::format("{}labelLike={}", queryChar, labelLike);
+		queryChar = '&';
+		if (!type.empty())
+			url += std::format("{}type={}", queryChar, CurlWrapper::escape(label));
+		url += std::format("{}should_bypass_cache={}", queryChar, cacheAllowed);
+
+		SPDLOG_INFO(
+			"httpGetJson"
+			", url: {}"
+			", _outputToBeCompressed: {}",
+			url, _outputToBeCompressed
+		);
+		vector<string> otherHeaders;
+		if (_outputToBeCompressed)
+			otherHeaders.push_back("X-ResponseBodyCompressed: true");
+		json mmsInfoRoot = CurlWrapper::httpGetJson(
+			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
+			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
+		);
+
+		json responseRoot = JSONUtils::asJson(mmsInfoRoot, "response");
+		json srtChannelConfRoot = JSONUtils::asJson(responseRoot, "srtChannelConf", json::array());
+
+		vector<SRTChannelConf> srtChannelConfs;
+
+		for (auto &[keyRoot, valRoot] : srtChannelConfRoot.items())
+			srtChannelConfs.push_back(fillSRTChannelConf(valRoot));
+
+		return srtChannelConfs;
+	}
+	catch (exception &e)
+	{
+		string errorMessage = std::format(
+			"{} failed"
+			", exception: {}",
+			api, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		throw;
+	}
+}
+
+vector<CatraMMSAPI::AWSChannelConf> CatraMMSAPI::getAWSChannelConf(string label, bool labelLike, string type, bool cacheAllowed)
+{
+	string api = "getAWSChannelConf";
+
+	if (!_loginSuccessful)
+	{
+		string errorMessage = "login API was not called yet";
+		SPDLOG_ERROR(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	try
+	{
+		string url = std::format("{}://{}:{}/catramms/1.0.1/conf/cdn/aws/channel", _apiProtocol, _apiHostname, _apiPort);
+		char queryChar = '?';
+		if (!label.empty())
+		{
+			url += std::format("{}label={}", queryChar, CurlWrapper::escape(label));
+			queryChar = '&';
+		}
+		url += std::format("{}labelLike={}", queryChar, labelLike);
+		queryChar = '&';
+		if (!type.empty())
+			url += std::format("{}type={}", queryChar, CurlWrapper::escape(label));
+		url += std::format("{}should_bypass_cache={}", queryChar, cacheAllowed);
+
+		SPDLOG_INFO(
+			"httpGetJson"
+			", url: {}"
+			", _outputToBeCompressed: {}",
+			url, _outputToBeCompressed
+		);
+		vector<string> otherHeaders;
+		if (_outputToBeCompressed)
+			otherHeaders.push_back("X-ResponseBodyCompressed: true");
+		json mmsInfoRoot = CurlWrapper::httpGetJson(
+			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
+			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
+		);
+
+		json responseRoot = JSONUtils::asJson(mmsInfoRoot, "response");
+		json awsChannelConfRoot = JSONUtils::asJson(responseRoot, "awsChannelConf", json::array());
+
+		vector<AWSChannelConf> awsChannelConfs;
+
+		for (auto &[keyRoot, valRoot] : awsChannelConfRoot.items())
+			awsChannelConfs.push_back(fillAWSChannelConf(valRoot));
+
+		return awsChannelConfs;
+	}
+	catch (exception &e)
+	{
+		string errorMessage = std::format(
+			"{} failed"
+			", exception: {}",
+			api, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		throw;
+	}
+}
+
+vector<CatraMMSAPI::CDN77ChannelConf> CatraMMSAPI::getCDN77ChannelConf(string label, bool labelLike, string type, bool cacheAllowed)
+{
+	string api = "getCDN77ChannelConf";
+
+	if (!_loginSuccessful)
+	{
+		string errorMessage = "login API was not called yet";
+		SPDLOG_ERROR(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	try
+	{
+		string url = std::format("{}://{}:{}/catramms/1.0.1/conf/cdn/cdn77/channel", _apiProtocol, _apiHostname, _apiPort);
+		char queryChar = '?';
+		if (!label.empty())
+		{
+			url += std::format("{}label={}", queryChar, CurlWrapper::escape(label));
+			queryChar = '&';
+		}
+		url += std::format("{}labelLike={}", queryChar, labelLike);
+		queryChar = '&';
+		if (!type.empty())
+			url += std::format("{}type={}", queryChar, CurlWrapper::escape(label));
+		url += std::format("{}should_bypass_cache={}", queryChar, cacheAllowed);
+
+		SPDLOG_INFO(
+			"httpGetJson"
+			", url: {}"
+			", _outputToBeCompressed: {}",
+			url, _outputToBeCompressed
+		);
+		vector<string> otherHeaders;
+		if (_outputToBeCompressed)
+			otherHeaders.push_back("X-ResponseBodyCompressed: true");
+		json mmsInfoRoot = CurlWrapper::httpGetJson(
+			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
+			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
+		);
+
+		json responseRoot = JSONUtils::asJson(mmsInfoRoot, "response");
+		json cdn77ChannelConfRoot = JSONUtils::asJson(responseRoot, "cdn77ChannelConf", json::array());
+
+		vector<CDN77ChannelConf> cdn77ChannelConfs;
+
+		for (auto &[keyRoot, valRoot] : cdn77ChannelConfRoot.items())
+			cdn77ChannelConfs.push_back(fillCDN77ChannelConf(valRoot));
+
+		return cdn77ChannelConfs;
+	}
+	catch (exception &e)
+	{
+		string errorMessage = std::format(
+			"{} failed"
+			", exception: {}",
+			api, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		throw;
+	}
+}
+
 CatraMMSAPI::UserProfile CatraMMSAPI::fillUserProfile(json userProfileRoot)
 {
 	try
@@ -902,6 +1094,98 @@ CatraMMSAPI::RTMPChannelConf CatraMMSAPI::fillRTMPChannelConf(json rtmpChannelCo
 	{
 		SPDLOG_ERROR(
 			"fillRTMPChannelConf failed"
+			", exception: {}",
+			e.what()
+		);
+		throw;
+	}
+}
+
+CatraMMSAPI::SRTChannelConf CatraMMSAPI::fillSRTChannelConf(json srtChannelConfRoot)
+{
+	try
+	{
+		CatraMMSAPI::SRTChannelConf srtChannelConf;
+
+		srtChannelConf.confKey = JSONUtils::asInt64(srtChannelConfRoot, "confKey", -1);
+		srtChannelConf.label = JSONUtils::asString(srtChannelConfRoot, "label", "");
+		srtChannelConf.srtURL = JSONUtils::asString(srtChannelConfRoot, "srtURL", "");
+		srtChannelConf.mode = JSONUtils::asString(srtChannelConfRoot, "mode", "caller");
+		srtChannelConf.streamId = JSONUtils::asString(srtChannelConfRoot, "streamId", "");
+		srtChannelConf.passphrase = JSONUtils::asString(srtChannelConfRoot, "passphrase", "");
+		srtChannelConf.playURL = JSONUtils::asString(srtChannelConfRoot, "playURL", "");
+		srtChannelConf.type = JSONUtils::asString(srtChannelConfRoot, "type", "");
+		srtChannelConf.outputIndex = JSONUtils::asInt64(srtChannelConfRoot, "outputIndex", -1);
+		srtChannelConf.reservedByIngestionJobKey = JSONUtils::asInt64(srtChannelConfRoot, "reservedByIngestionJobKey", -1);
+		srtChannelConf.configurationLabel = JSONUtils::asString(srtChannelConfRoot, "configurationLabel", "");
+
+		return srtChannelConf;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"fillSRTChannelConf failed"
+			", exception: {}",
+			e.what()
+		);
+		throw;
+	}
+}
+
+CatraMMSAPI::AWSChannelConf CatraMMSAPI::fillAWSChannelConf(json awsChannelConfRoot)
+{
+	try
+	{
+		CatraMMSAPI::AWSChannelConf awsChannelConf;
+
+		awsChannelConf.confKey = JSONUtils::asInt64(awsChannelConfRoot, "confKey", -1);
+		awsChannelConf.label = JSONUtils::asString(awsChannelConfRoot, "label", "");
+		awsChannelConf.channelId = JSONUtils::asString(awsChannelConfRoot, "channelId", "");
+		awsChannelConf.rtmpURL = JSONUtils::asString(awsChannelConfRoot, "rtmpURL", "");
+		awsChannelConf.playURL = JSONUtils::asString(awsChannelConfRoot, "playURL", "");
+		awsChannelConf.type = JSONUtils::asString(awsChannelConfRoot, "type", "");
+		awsChannelConf.outputIndex = JSONUtils::asInt64(awsChannelConfRoot, "outputIndex", -1);
+		awsChannelConf.reservedByIngestionJobKey = JSONUtils::asInt64(awsChannelConfRoot, "reservedByIngestionJobKey", -1);
+		awsChannelConf.configurationLabel = JSONUtils::asString(awsChannelConfRoot, "configurationLabel", "");
+
+		return awsChannelConf;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"fillAWSChannelConf failed"
+			", exception: {}",
+			e.what()
+		);
+		throw;
+	}
+}
+
+CatraMMSAPI::CDN77ChannelConf CatraMMSAPI::fillCDN77ChannelConf(json cdn77ChannelConfRoot)
+{
+	try
+	{
+		CatraMMSAPI::CDN77ChannelConf cdn77ChannelConf;
+
+		cdn77ChannelConf.confKey = JSONUtils::asInt64(cdn77ChannelConfRoot, "confKey", -1);
+		cdn77ChannelConf.label = JSONUtils::asString(cdn77ChannelConfRoot, "label", "");
+		cdn77ChannelConf.srtFeed = JSONUtils::asBool(cdn77ChannelConfRoot, "srtFeed", false);
+		cdn77ChannelConf.srtURL = JSONUtils::asString(cdn77ChannelConfRoot, "srtURL", "");
+		cdn77ChannelConf.rtmpURL = JSONUtils::asString(cdn77ChannelConfRoot, "rtmpURL", "");
+		cdn77ChannelConf.resourceURL = JSONUtils::asString(cdn77ChannelConfRoot, "resourceURL", "");
+		cdn77ChannelConf.filePath = JSONUtils::asString(cdn77ChannelConfRoot, "filePath", "");
+		cdn77ChannelConf.secureToken = JSONUtils::asString(cdn77ChannelConfRoot, "secureToken", "");
+		cdn77ChannelConf.type = JSONUtils::asString(cdn77ChannelConfRoot, "type", "");
+		cdn77ChannelConf.outputIndex = JSONUtils::asInt64(cdn77ChannelConfRoot, "outputIndex", -1);
+		cdn77ChannelConf.reservedByIngestionJobKey = JSONUtils::asInt64(cdn77ChannelConfRoot, "reservedByIngestionJobKey", -1);
+		cdn77ChannelConf.configurationLabel = JSONUtils::asString(cdn77ChannelConfRoot, "configurationLabel", "");
+
+		return cdn77ChannelConf;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"fillCDN77ChannelConf failed"
 			", exception: {}",
 			e.what()
 		);
