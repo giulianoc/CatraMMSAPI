@@ -157,6 +157,7 @@ class CatraMMSAPI
 		string label;
 		string contentType;
 		string fileFormat;
+		string description;
 		EncodingProfileVideo videoDetails;
 		EncodingProfileAudio audioDetails;
 		EncodingProfileImage imageDetails;

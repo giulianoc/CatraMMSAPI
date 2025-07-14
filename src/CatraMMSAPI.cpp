@@ -905,6 +905,7 @@ CatraMMSAPI::EncodingProfile CatraMMSAPI::fillEncodingProfile(json encodingProfi
 
 		encodingProfile.encodingProfileRoot = JSONUtils::asJson(encodingProfileRoot, "profile");
 		encodingProfile.fileFormat = JSONUtils::asString(encodingProfile.encodingProfileRoot, "fileFormat", "");
+		encodingProfile.description = JSONUtils::asString(encodingProfile.encodingProfileRoot, "description", "");
 		if (deep)
 		{
 			if (encodingProfile.contentType == "video")
