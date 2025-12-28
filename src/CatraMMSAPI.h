@@ -193,7 +193,7 @@ class CatraMMSAPI
 		string streamName;
 		string userName;
 		string password;
-		string playURL;
+		json playURLDetails;
 		string type;
 		long outputIndex;
 		int64_t reservedByIngestionJobKey;
@@ -208,33 +208,6 @@ class CatraMMSAPI
 		string streamId;
 		string passphrase;
 		string playURL;
-		string type;
-		long outputIndex;
-		int64_t reservedByIngestionJobKey;
-		string configurationLabel;
-	};
-	struct AWSChannelConf
-	{
-		int64_t confKey;
-		string label;
-		string channelId;
-		string rtmpURL;
-		string playURL;
-		string type;
-		long outputIndex;
-		int64_t reservedByIngestionJobKey;
-		string configurationLabel;
-	};
-	struct CDN77ChannelConf
-	{
-		int64_t confKey;
-		string label;
-		bool srtFeed;
-		string srtURL;
-		string rtmpURL;
-		string resourceURL;
-		string filePath;
-		string secureToken;
 		string type;
 		long outputIndex;
 		int64_t reservedByIngestionJobKey;
@@ -258,8 +231,6 @@ class CatraMMSAPI
 	vector<EncodingProfilesSet> getEncodingProfilesSets(string contentType, bool cacheAllowed = true);
 	vector<RTMPChannelConf> getRTMPChannelConf(string label = "", bool labelLike = true, string type = "", bool cacheAllowed = true);
 	vector<SRTChannelConf> getSRTChannelConf(string label = "", bool labelLike = true, string type = "", bool cacheAllowed = true);
-	vector<AWSChannelConf> getAWSChannelConf(string label = "", bool labelLike = true, string type = "", bool cacheAllowed = true);
-	vector<CDN77ChannelConf> getCDN77ChannelConf(string label = "", bool labelLike = true, string type = "", bool cacheAllowed = true);
 	pair<IngestionResult, vector<IngestionResult>> ingestionWorkflow(json workflowRoot);
 	void ingestionBinary(int64_t addContentIngestionJobKey, string pathFileName, function<bool(int, int)> chunkCompleted);
 
@@ -290,6 +261,4 @@ class CatraMMSAPI
 	Encoder fillEncoder(json encoderRoot);
 	RTMPChannelConf fillRTMPChannelConf(json rtmpChannelConfRoot);
 	SRTChannelConf fillSRTChannelConf(json srtChannelConfRoot);
-	AWSChannelConf fillAWSChannelConf(json awsChannelConfRoot);
-	CDN77ChannelConf fillCDN77ChannelConf(json cdn77ChannelConfRoot);
 };
