@@ -1,15 +1,10 @@
 
-#ifndef CatraMMSAPI_h
-#define CatraMMSAPI_h
+#pragma once
 
 #include "JSONUtils.h"
 #include "spdlog/spdlog.h"
 
 using namespace std;
-
-using json = nlohmann::json;
-using ordered_json = nlohmann::ordered_json;
-using namespace nlohmann::literals;
 
 class CatraMMSAPI
 {
@@ -32,7 +27,6 @@ class CatraMMSAPI
 	};
 	struct Cost
 	{
-
 		string description;
 		string type;		 // storage or encoder
 		int64_t monthlyCost; // eur
@@ -247,7 +241,7 @@ class CatraMMSAPI
 		string configurationLabel;
 	};
 
-	CatraMMSAPI(json configurationRoot);
+	explicit CatraMMSAPI(json &configurationRoot);
 	~CatraMMSAPI() = default;
 
 	UserProfile userProfile;
@@ -299,5 +293,3 @@ class CatraMMSAPI
 	AWSChannelConf fillAWSChannelConf(json awsChannelConfRoot);
 	CDN77ChannelConf fillCDN77ChannelConf(json cdn77ChannelConfRoot);
 };
-
-#endif
