@@ -695,7 +695,8 @@ CatraMMSAPI::WorkspaceDetails CatraMMSAPI::fillWorkspaceDetails(json workspacede
 		{
 			try
 			{
-				workspaceDetails.preferences = JSONUtils::toJson(JSONUtils::asString(workspacedetailsRoot, "preferences", ""));
+				workspaceDetails.preferences = JSONUtils::toJson<json>(JSONUtils::asString(workspacedetailsRoot,
+					"preferences", ""));
 			}
 			catch (exception &e)
 			{
@@ -708,7 +709,8 @@ CatraMMSAPI::WorkspaceDetails CatraMMSAPI::fillWorkspaceDetails(json workspacede
 		{
 			try
 			{
-				workspaceDetails.externalDeliveries = JSONUtils::toJson(JSONUtils::asString(workspacedetailsRoot, "externalDeliveries", ""));
+				workspaceDetails.externalDeliveries = JSONUtils::toJson<json>(
+					JSONUtils::asString(workspacedetailsRoot, "externalDeliveries", ""));
 			}
 			catch (exception &e)
 			{
