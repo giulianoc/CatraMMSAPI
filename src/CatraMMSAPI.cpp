@@ -8,6 +8,10 @@
 #include <stdexcept>
 #include <tuple>
 
+using namespace std;
+using json = nlohmann::json;
+using ordered_json = nlohmann::ordered_json;
+
 CatraMMSAPI::CatraMMSAPI(json &configurationRoot) : userProfile(), currentWorkspaceDetails()
 {
 	_apiTimeoutInSeconds = JSONUtils::asInt32(JSONUtils::jpath(configurationRoot, {"mms", "api"}),
