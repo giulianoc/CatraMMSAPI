@@ -67,7 +67,6 @@ class CatraMMSAPI
 		std::string languageCode;
 		std::string timezone;
 		nlohmann::json preferences;
-		nlohmann::json externalDeliveries;
 		time_t creationDate;
 		std::string apiKey;
 		bool owner;

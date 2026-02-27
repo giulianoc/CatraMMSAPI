@@ -2,6 +2,8 @@
 #include "CatraMMSAPI.h"
 #include "CurlWrapper.h"
 #include "Datetime.h"
+#include "JsonPath.h"
+
 #include <exception>
 #include <format>
 #include <optional>
@@ -14,100 +16,91 @@ using ordered_json = nlohmann::ordered_json;
 
 CatraMMSAPI::CatraMMSAPI(json &configurationRoot) : userProfile(), currentWorkspaceDetails()
 {
-	_apiTimeoutInSeconds = JSONUtils::asInt32(JSONUtils::jpath(configurationRoot, {"mms", "api"}),
-		"timeoutInSeconds", 15);
+	_apiTimeoutInSeconds = JsonPath(&configurationRoot)["mms"]["api"]["timeoutInSeconds"].as<int32_t>(15);
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->timeoutInSeconds: {}",
 		_apiTimeoutInSeconds
 	);
 
-	_apiMaxRetries = JSONUtils::asInt32(JSONUtils::jpath(configurationRoot, {"mms", "api"}), "maxRetries", 1);
+	_apiMaxRetries = JsonPath(&configurationRoot)["mms"]["api"]["maxRetries"].as<int32_t>(1);
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->api->maxRetries: {}",
 		_apiMaxRetries
 	);
 
-	_statisticsTimeoutInSeconds = JSONUtils::asInt32(JSONUtils::jpath(configurationRoot, {"mms", "statistics"}), "timeoutInSeconds", 30);
+	_statisticsTimeoutInSeconds = JsonPath(&configurationRoot)["mms"]["statistics"]["timeoutInSeconds"].as<int32_t>(30);
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->statistics->timeoutInSeconds: {}",
 		_statisticsTimeoutInSeconds
 	);
 
-	_deliveryMaxRetries = JSONUtils::asInt32(JSONUtils::jpath(configurationRoot, {"mms", "delivery"}), "maxRetriesNumber", 2);
+	_deliveryMaxRetries = JsonPath(&configurationRoot)["mms"]["delivery"]["maxRetriesNumber"].as<int32_t>(2);
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->delivery->maxRetriesNumber: {}",
 		_deliveryMaxRetries
 	);
 
-	_apiProtocol = JSONUtils::asString(JSONUtils::jpath(configurationRoot, {"mms", "api"}),
-		"protocol", "https");
+	_apiProtocol = JsonPath(&configurationRoot)["mms"]["api"]["protocol"].as<string>("https");
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->api->protocol: {}",
 		_apiProtocol
 	);
 
-	_apiHostname = JSONUtils::asString(JSONUtils::jpath(configurationRoot, {"mms", "api"}),
-		"hostname", "mms-api.catramms-cloud.com");
+	_apiHostname = JsonPath(&configurationRoot)["mms"]["api"]["hostname"].as<string>("mms-api.catramms-cloud.com");
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->api->hostname: {}",
 		_apiHostname
 	);
 
-	_apiPort = JSONUtils::asInt32(JSONUtils::jpath(configurationRoot, {"mms", "api"}), "port", 443);
+	_apiPort = JsonPath(&configurationRoot)["mms"]["api"]["port"].as<int32_t>(443);
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->api->port: {}",
 		_apiPort
 	);
 
-	_binaryProtocol = JSONUtils::asString(JSONUtils::jpath(configurationRoot, {"mms", "binary"}),
-		"protocol", "https");
+	_binaryProtocol = JsonPath(&configurationRoot)["mms"]["binary"]["protocol"].as<string>("https");
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->binary->protocol: {}",
 		_binaryProtocol
 	);
 
-	_binaryHostname = JSONUtils::asString(JSONUtils::jpath(configurationRoot, {"mms", "binary"}),
-		"hostname", "mms-binary.catramms-cloud.com");
+	_binaryHostname = JsonPath(&configurationRoot)["mms"]["binary"]["v"].as<string>("mms-binary.catramms-cloud.com");
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->binary->hostname: {}",
 		_binaryHostname
 	);
 
-	_binaryPort = JSONUtils::asInt32(JSONUtils::jpath(configurationRoot, {"mms", "binary"}),
-		"port", 80);
+	_binaryPort = JsonPath(&configurationRoot)["mms"]["binary"]["port"].as<int32_t>(80);
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->binary->port: {}",
 		_binaryPort
 	);
 
-	_binaryTimeoutInSeconds = JSONUtils::asInt32(JSONUtils::jpath(configurationRoot, {"mms", "binary"}),
-		"timeoutInSeconds", 180);
+	_binaryTimeoutInSeconds = JsonPath(&configurationRoot)["mms"]["binary"]["timeoutInSeconds"].as<int32_t>(180);
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->binary->timeoutInSeconds: {}",
 		_binaryTimeoutInSeconds
 	);
 
-	_binaryMaxRetries = JSONUtils::asInt32(JSONUtils::jpath(configurationRoot, {"mms", "binary"}),
-		"maxRetries", 1);
+	_binaryMaxRetries = JsonPath(&configurationRoot)["mms"]["binary"]["maxRetries"].as<int32_t>(1);
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->binary->maxRetries: {}",
 		_binaryMaxRetries
 	);
 
-	_outputToBeCompressed = JSONUtils::asBool(JSONUtils::jpath(configurationRoot, {"mms"}),
-		"outputToBeCompressed", true);
+	_outputToBeCompressed = JsonPath(&configurationRoot)["mms"]["outputToBeCompressed"].as<bool>(true);
 	SPDLOG_DEBUG(
 		"Configuration item"
 		", mms->outputToBeCompressed: {}",
@@ -163,7 +156,7 @@ void CatraMMSAPI::login(string userName, string password, string clientIPAddress
 				url, _apiTimeoutInSeconds
 			);
 			json clientIPRoot = CurlWrapper::httpGetJson(url, _apiTimeoutInSeconds);
-			clientIPAddress = JSONUtils::asString(clientIPRoot, "ip");
+			clientIPAddress = JsonPath(&clientIPRoot)["ip"].as<string>();
 			SPDLOG_INFO(
 				"httpGetJson"
 				", url: {}"
@@ -221,7 +214,7 @@ void CatraMMSAPI::login(string userName, string password, string clientIPAddress
 		}
 		currentWorkspaceDetails = fillWorkspaceDetails(mmsInfoRoot["workspace"]);
 
-		mmsVersion = JSONUtils::asString(mmsInfoRoot, "mmsVersion");
+		mmsVersion = JsonPath(&mmsInfoRoot)["mmsVersion"].as<string>("");
 
 		_userName = userName;
 		_password = password;
@@ -271,21 +264,21 @@ pair<CatraMMSAPI::IngestionResult, vector<CatraMMSAPI::IngestionResult>> CatraMM
 
 		IngestionResult workflowResult;
 		{
-			json workflowRoot = JSONUtils::asJson(mmsInfoRoot, "workflow");
+			auto workflowRoot = JsonPath(&mmsInfoRoot)["workflow"].as<json>();
 
-			workflowResult.key = JSONUtils::asInt64(workflowRoot, "ingestionRootKey", -1);
-			workflowResult.label = JSONUtils::asString(workflowRoot, "label", "");
+			workflowResult.key = JsonPath(&workflowRoot)["ingestionRootKey"].as<int64_t>(-1);
+			workflowResult.label = JsonPath(&workflowRoot)["label"].as<string>("");
 		}
 
 		vector<IngestionResult> ingestionJobs;
 		{
-			json tasksRoot = JSONUtils::asJson(mmsInfoRoot, "tasks", json::array());
+			json tasksRoot = JsonPath(&mmsInfoRoot)["tasks"].as<json>(json::array());
 			for (auto &[keyRoot, valRoot] : tasksRoot.items())
 			{
 				IngestionResult ingestionJobResult;
 
-				ingestionJobResult.key = JSONUtils::asInt64(valRoot, "ingestionJobKey", -1);
-				ingestionJobResult.label = JSONUtils::asString(valRoot, "label", "");
+				ingestionJobResult.key = JsonPath(&valRoot)["ingestionJobKey"].as<int64_t>(-1);
+				ingestionJobResult.label = JsonPath(&valRoot)["label"].as<string>();
 
 				ingestionJobs.push_back(ingestionJobResult);
 			}
@@ -386,8 +379,8 @@ vector<CatraMMSAPI::EncodingProfile> CatraMMSAPI::getEncodingProfiles(string con
 			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
 		);
 
-		json responseRoot = JSONUtils::asJson(mmsInfoRoot, "response");
-		json encodingProfilesRoot = JSONUtils::asJson(responseRoot, "encodingProfiles", json::array());
+		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
+		json encodingProfilesRoot = JsonPath(&responseRoot)["encodingProfiles"].as<json>(json::array());
 
 		vector<EncodingProfile> encodingProfiles;
 
@@ -442,8 +435,8 @@ vector<CatraMMSAPI::EncodingProfilesSet> CatraMMSAPI::getEncodingProfilesSets(st
 			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
 		);
 
-		json responseRoot = JSONUtils::asJson(mmsInfoRoot, "response");
-		json encodingProfilesSetsRoot = JSONUtils::asJson(responseRoot, "encodingProfilesSets", json::array());
+		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
+		json encodingProfilesSetsRoot = JsonPath(&responseRoot)["encodingProfilesSets"].as<json>(json::array());
 
 		vector<EncodingProfilesSet> encodingProfilesSets;
 
@@ -498,8 +491,8 @@ vector<CatraMMSAPI::EncodersPool> CatraMMSAPI::getEncodersPool(bool cacheAllowed
 			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
 		);
 
-		json responseRoot = JSONUtils::asJson(mmsInfoRoot, "response");
-		json encodersPoolRoot = JSONUtils::asJson(responseRoot, "encodersPool", json::array());
+		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
+		json encodersPoolRoot = JsonPath(&responseRoot)["encodersPool"].as<json>(json::array());
 
 		vector<EncodersPool> encodersPool;
 
@@ -562,8 +555,8 @@ vector<CatraMMSAPI::RTMPChannelConf> CatraMMSAPI::getRTMPChannelConf(string labe
 			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
 		);
 
-		json responseRoot = JSONUtils::asJson(mmsInfoRoot, "response");
-		json rtmpChannelConfRoot = JSONUtils::asJson(responseRoot, "rtmpChannelConf", json::array());
+		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
+		json rtmpChannelConfRoot = JsonPath(&responseRoot)["rtmpChannelConf"].as<json>(json::array());
 
 		vector<RTMPChannelConf> rtmpChannelConfs;
 
@@ -626,8 +619,8 @@ vector<CatraMMSAPI::SRTChannelConf> CatraMMSAPI::getSRTChannelConf(string label,
 			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
 		);
 
-		json responseRoot = JSONUtils::asJson(mmsInfoRoot, "response");
-		json srtChannelConfRoot = JSONUtils::asJson(responseRoot, "srtChannelConf", json::array());
+		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
+		json srtChannelConfRoot = JsonPath(&responseRoot)["srtChannelConf"].as<json>(json::array());
 
 		vector<SRTChannelConf> srtChannelConfs;
 
@@ -653,17 +646,17 @@ CatraMMSAPI::UserProfile CatraMMSAPI::fillUserProfile(json userProfileRoot)
 {
 	try
 	{
-		CatraMMSAPI::UserProfile userProfile;
+		UserProfile userProfile;
 
-		userProfile.userKey = JSONUtils::asInt64(userProfileRoot, "userKey", -1);
-		userProfile.ldapEnabled = JSONUtils::asBool(userProfileRoot, "ldapEnabled", false);
-		userProfile.name = JSONUtils::asString(userProfileRoot, "name", "");
-		userProfile.country = JSONUtils::asString(userProfileRoot, "country", "");
-		userProfile.timezone = JSONUtils::asString(userProfileRoot, "timezone", "");
-		userProfile.email = JSONUtils::asString(userProfileRoot, "email", "");
-		userProfile.creationDate = Datetime::parseUtcStringToUtcInSecs(JSONUtils::asString(userProfileRoot, "creationDate", ""));
-		userProfile.insolvent = JSONUtils::asBool(userProfileRoot, "insolvent", false);
-		userProfile.expirationDate = Datetime::parseUtcStringToUtcInSecs(JSONUtils::asString(userProfileRoot, "expirationDate", ""));
+		userProfile.userKey = JsonPath(&userProfileRoot)["userKey"].as<int64_t>(-1);
+		userProfile.ldapEnabled = JsonPath(&userProfileRoot)["ldapEnabled"].as<bool>(false);
+		userProfile.name = JsonPath(&userProfileRoot)["name"].as<string>();
+		userProfile.country = JsonPath(&userProfileRoot)["country"].as<string>();
+		userProfile.timezone = JsonPath(&userProfileRoot)["timezone"].as<string>();
+		userProfile.email = JsonPath(&userProfileRoot)["email"].as<string>();
+		userProfile.creationDate = Datetime::parseStringToUtcInSecs(JsonPath(&userProfileRoot)["creationDate"].as<string>());
+		userProfile.insolvent = JsonPath(&userProfileRoot)["insolvent"].as<bool>(false);
+		userProfile.expirationDate = Datetime::parseStringToUtcInSecs(JsonPath(&userProfileRoot)["expirationDate"].as<string>());
 
 		return userProfile;
 	}
@@ -684,86 +677,69 @@ CatraMMSAPI::WorkspaceDetails CatraMMSAPI::fillWorkspaceDetails(json workspacede
 	{
 		CatraMMSAPI::WorkspaceDetails workspaceDetails;
 
-		workspaceDetails.workspaceKey = JSONUtils::asInt64(workspacedetailsRoot, "workspaceKey", -1);
-		workspaceDetails.enabled = JSONUtils::asBool(workspacedetailsRoot, "enabled", false);
-		workspaceDetails.name = JSONUtils::asString(workspacedetailsRoot, "workspaceName", "");
-		workspaceDetails.maxEncodingPriority = JSONUtils::asString(workspacedetailsRoot, "maxEncodingPriority", "");
-		workspaceDetails.encodingPeriod = JSONUtils::asString(workspacedetailsRoot, "encodingPeriod", "");
-		workspaceDetails.maxIngestionsNumber = JSONUtils::asInt64(workspacedetailsRoot, "maxIngestionsNumber", -1);
-		workspaceDetails.usageInMB = JSONUtils::asInt64(workspacedetailsRoot, "workSpaceUsageInMB", -1);
-		workspaceDetails.languageCode = JSONUtils::asString(workspacedetailsRoot, "languageCode", "");
-		workspaceDetails.timezone = JSONUtils::asString(workspacedetailsRoot, "timezone", "");
+		workspaceDetails.workspaceKey = JsonPath(&workspacedetailsRoot)["workspaceKey"].as<int64_t>(-1);
+		workspaceDetails.enabled = JsonPath(&workspacedetailsRoot)["enabled"].as<bool>(false);
+		workspaceDetails.name = JsonPath(&workspacedetailsRoot)["workspaceName"].as<string>();
+		workspaceDetails.maxEncodingPriority = JsonPath(&workspacedetailsRoot)["maxEncodingPriority"].as<string>();
+		workspaceDetails.encodingPeriod = JsonPath(&workspacedetailsRoot)["encodingPeriod"].as<string>();
+		workspaceDetails.maxIngestionsNumber = JsonPath(&workspacedetailsRoot)["maxIngestionsNumber"].as<int64_t>(-1);
+		workspaceDetails.usageInMB = JsonPath(&workspacedetailsRoot)["workSpaceUsageInMB"].as<int64_t>(-1);
+		workspaceDetails.languageCode = JsonPath(&workspacedetailsRoot)["languageCode"].as<string>();
+		workspaceDetails.timezone = JsonPath(&workspacedetailsRoot)["timezone"].as<string>();
 
 		workspaceDetails.preferences = nullptr;
-		if (!JSONUtils::asString(workspacedetailsRoot, "preferences", "").empty())
+		if (!JsonPath(&workspacedetailsRoot)["preferences"].as<string>("").empty())
 		{
 			try
 			{
-				workspaceDetails.preferences = JSONUtils::toJson<json>(JSONUtils::asString(workspacedetailsRoot,
-					"preferences", ""));
+				workspaceDetails.preferences = JSONUtils::toJson<json>(JsonPath(&workspacedetailsRoot)["preferences"].as<string>());
 			}
 			catch (exception &e)
 			{
-				SPDLOG_ERROR("Wrong workspaceDetails.preferences format: {}", JSONUtils::asString(workspacedetailsRoot, "preferences", ""));
+				SPDLOG_ERROR("Wrong workspaceDetails.preferences format: {}", JsonPath(&workspacedetailsRoot)["preferences"].as<string>());
 			}
 		}
 
-		workspaceDetails.externalDeliveries = nullptr;
-		if (!JSONUtils::asString(workspacedetailsRoot, "externalDeliveries", "").empty())
-		{
-			try
-			{
-				workspaceDetails.externalDeliveries = JSONUtils::toJson<json>(
-					JSONUtils::asString(workspacedetailsRoot, "externalDeliveries", ""));
-			}
-			catch (exception &e)
-			{
-				SPDLOG_ERROR(
-					"Wrong workspaceDetails.externalDeliveries format: {}", JSONUtils::asString(workspacedetailsRoot, "externalDeliveries", "")
-				);
-			}
-		}
-
-		workspaceDetails.creationDate = Datetime::parseUtcStringToUtcInSecs(JSONUtils::asString(workspacedetailsRoot, "creationDate", ""));
-		workspaceDetails.workspaceOwnerUserKey = JSONUtils::asInt64(workspacedetailsRoot, "workspaceOwnerUserKey", -1);
-		workspaceDetails.workspaceOwnerUserName = JSONUtils::asString(workspacedetailsRoot, "workspaceOwnerUserName", "");
+		workspaceDetails.creationDate = Datetime::parseStringToUtcInSecs(JsonPath(&workspacedetailsRoot)["creationDate"].as<string>());
+		workspaceDetails.workspaceOwnerUserKey = JsonPath(&workspacedetailsRoot)["workspaceOwnerUserKey"].as<int64_t>(-1);
+		workspaceDetails.workspaceOwnerUserName = JsonPath(&workspacedetailsRoot)["workspaceOwnerUserName"].as<string>();
 		if (JSONUtils::isPresent(workspacedetailsRoot, "userAPIKey"))
 		{
-			json userAPIKeyRoot = JSONUtils::asJson(workspacedetailsRoot, "userAPIKey");
+			json userAPIKeyRoot = JsonPath(&workspacedetailsRoot)["userAPIKey"].as<json>();
 
-			workspaceDetails.apiKey = JSONUtils::asString(userAPIKeyRoot, "apiKey", "");
-			workspaceDetails.owner = JSONUtils::asBool(userAPIKeyRoot, "owner", false);
-			workspaceDetails.defaultWorkspace = JSONUtils::asBool(userAPIKeyRoot, "default", false);
-			workspaceDetails.expirationDate = Datetime::parseUtcStringToUtcInSecs(JSONUtils::asString(userAPIKeyRoot, "expirationDate", ""));
-			workspaceDetails.admin = JSONUtils::asBool(userAPIKeyRoot, "admin", false);
-			workspaceDetails.createRemoveWorkspace = JSONUtils::asBool(userAPIKeyRoot, "createRemoveWorkspace", false);
-			workspaceDetails.ingestWorkflow = JSONUtils::asBool(userAPIKeyRoot, "ingestWorkflow", false);
-			workspaceDetails.createProfiles = JSONUtils::asBool(userAPIKeyRoot, "createProfiles", false);
-			workspaceDetails.deliveryAuthorization = JSONUtils::asBool(userAPIKeyRoot, "deliveryAuthorization", false);
-			workspaceDetails.shareWorkspace = JSONUtils::asBool(userAPIKeyRoot, "shareWorkspace", false);
-			workspaceDetails.editMedia = JSONUtils::asBool(userAPIKeyRoot, "editMedia", false);
-			workspaceDetails.editConfiguration = JSONUtils::asBool(userAPIKeyRoot, "editConfiguration", false);
-			workspaceDetails.killEncoding = JSONUtils::asBool(userAPIKeyRoot, "killEncoding", false);
-			workspaceDetails.cancelIngestionJob = JSONUtils::asBool(userAPIKeyRoot, "cancelIngestionJob", false);
-			workspaceDetails.editEncodersPool = JSONUtils::asBool(userAPIKeyRoot, "editEncodersPool", false);
-			workspaceDetails.applicationRecorder = JSONUtils::asBool(userAPIKeyRoot, "applicationRecorder", false);
+			workspaceDetails.apiKey = JsonPath(&userAPIKeyRoot)["apiKey"].as<string>();
+			workspaceDetails.owner = JsonPath(&userAPIKeyRoot)["owner"].as<bool>(false);
+			workspaceDetails.defaultWorkspace = JsonPath(&userAPIKeyRoot)["default"].as<bool>(false);
+			workspaceDetails.expirationDate = Datetime::parseStringToUtcInSecs(JsonPath(&userAPIKeyRoot)["expirationDate"].as<string>());
+			workspaceDetails.admin = JsonPath(&userAPIKeyRoot)["admin"].as<bool>(false);
+			workspaceDetails.createRemoveWorkspace = JsonPath(&userAPIKeyRoot)["createRemoveWorkspace"].as<bool>(false);
+			workspaceDetails.ingestWorkflow = JsonPath(&userAPIKeyRoot)["ingestWorkflow"].as<bool>(false);
+			workspaceDetails.createProfiles = JsonPath(&userAPIKeyRoot)["createProfiles"].as<bool>(false);
+			workspaceDetails.deliveryAuthorization = JsonPath(&userAPIKeyRoot)["deliveryAuthorization"].as<bool>(false);
+			workspaceDetails.shareWorkspace = JsonPath(&userAPIKeyRoot)["shareWorkspace"].as<bool>(false);
+			workspaceDetails.editMedia = JsonPath(&userAPIKeyRoot)["editMedia"].as<bool>(false);
+			workspaceDetails.editConfiguration = JsonPath(&userAPIKeyRoot)["editConfiguration"].as<bool>(false);
+			workspaceDetails.killEncoding = JsonPath(&userAPIKeyRoot)["killEncoding"].as<bool>(false);
+			workspaceDetails.cancelIngestionJob = JsonPath(&userAPIKeyRoot)["cancelIngestionJob"].as<bool>(false);
+			workspaceDetails.editEncodersPool = JsonPath(&userAPIKeyRoot)["editEncodersPool"].as<bool>(false);
+			workspaceDetails.applicationRecorder = JsonPath(&userAPIKeyRoot)["applicationRecorder"].as<bool>(false);
 		}
 		if (JSONUtils::isPresent(workspacedetailsRoot, "cost"))
 		{
-			json costInfoRoot = JSONUtils::asJson(workspacedetailsRoot, "cost");
+			json costInfoRoot = JsonPath(&workspacedetailsRoot)["cost"].as<json>();
 
-			workspaceDetails.maxStorageInGB = JSONUtils::asInt64(costInfoRoot, "maxStorageInGB", -1);
-			workspaceDetails.currentCostForStorage = JSONUtils::asInt64(costInfoRoot, "currentCostForStorage", -1);
-			workspaceDetails.dedicatedEncoder_power_1 = JSONUtils::asInt64(costInfoRoot, "dedicatedEncoder_power_1", -1);
-			workspaceDetails.currentCostForDedicatedEncoder_power_1 = JSONUtils::asInt64(costInfoRoot, "currentCostForDedicatedEncoder_power_1", -1);
-			workspaceDetails.dedicatedEncoder_power_2 = JSONUtils::asInt64(costInfoRoot, "dedicatedEncoder_power_2", -1);
-			workspaceDetails.currentCostForDedicatedEncoder_power_2 = JSONUtils::asInt64(costInfoRoot, "currentCostForDedicatedEncoder_power_2", -1);
-			workspaceDetails.dedicatedEncoder_power_3 = JSONUtils::asInt64(costInfoRoot, "dedicatedEncoder_power_3", -1);
-			workspaceDetails.currentCostForDedicatedEncoder_power_3 = JSONUtils::asInt64(costInfoRoot, "currentCostForDedicatedEncoder_power_3", -1);
-			workspaceDetails.CDN_type_1 = JSONUtils::asInt64(costInfoRoot, "CDN_type_1", -1);
-			workspaceDetails.currentCostForCDN_type_1 = JSONUtils::asInt64(costInfoRoot, "currentCostForCDN_type_1", -1);
-			workspaceDetails.support_type_1 = JSONUtils::asBool(costInfoRoot, "support_type_1", false);
-			workspaceDetails.currentCostForSupport_type_1 = JSONUtils::asInt64(costInfoRoot, "currentCostForSupport_type_1", -1);
+			workspaceDetails.maxStorageInGB = JsonPath(&costInfoRoot)["maxStorageInGB"].as<int64_t>(-1);
+			workspaceDetails.currentCostForStorage = JsonPath(&costInfoRoot)["currentCostForStorage"].as<int64_t>(-1);
+			workspaceDetails.dedicatedEncoder_power_1 = JsonPath(&costInfoRoot)["dedicatedEncoder_power_1"].as<int64_t>(-1);
+			workspaceDetails.currentCostForDedicatedEncoder_power_1 = JsonPath(&costInfoRoot)["currentCostForDedicatedEncoder_power_1"].as<int64_t>(-1);
+			workspaceDetails.dedicatedEncoder_power_2 = JsonPath(&costInfoRoot)["dedicatedEncoder_power_2"].as<int64_t>(-1);
+			workspaceDetails.currentCostForDedicatedEncoder_power_2 = JsonPath(&costInfoRoot)["currentCostForDedicatedEncoder_power_2"].as<int64_t>(-1);
+			workspaceDetails.dedicatedEncoder_power_3 = JsonPath(&costInfoRoot)["dedicatedEncoder_power_3"].as<int64_t>(-1);
+			workspaceDetails.currentCostForDedicatedEncoder_power_3 = JsonPath(&costInfoRoot)["currentCostForDedicatedEncoder_power_3"].as<int64_t>(-1);
+			workspaceDetails.CDN_type_1 = JsonPath(&costInfoRoot)["CDN_type_1"].as<int64_t>(-1);
+			workspaceDetails.currentCostForCDN_type_1 = JsonPath(&costInfoRoot)["currentCostForCDN_type_1"].as<int64_t>(-1);
+			workspaceDetails.support_type_1 = JsonPath(&costInfoRoot)["support_type_1"].as<bool>(false);
+			workspaceDetails.currentCostForSupport_type_1 = JsonPath(&costInfoRoot)["currentCostForSupport_type_1"].as<int64_t>(-1);
 		}
 
 		return workspaceDetails;
@@ -785,76 +761,76 @@ CatraMMSAPI::EncodingProfile CatraMMSAPI::fillEncodingProfile(json encodingProfi
 	{
 		CatraMMSAPI::EncodingProfile encodingProfile;
 
-		encodingProfile.global = JSONUtils::asBool(encodingProfileRoot, "global", false);
-		encodingProfile.encodingProfileKey = JSONUtils::asInt64(encodingProfileRoot, "encodingProfileKey", -1);
-		encodingProfile.label = JSONUtils::asString(encodingProfileRoot, "label", "");
-		encodingProfile.contentType = JSONUtils::asString(encodingProfileRoot, "contentType", "");
+		encodingProfile.global = JsonPath(&encodingProfileRoot)["global"].as<bool>(false);
+		encodingProfile.encodingProfileKey = JsonPath(&encodingProfileRoot)["encodingProfileKey"].as<int64_t>(-1);
+		encodingProfile.label = JsonPath(&encodingProfileRoot)["label"].as<string>();
+		encodingProfile.contentType = JsonPath(&encodingProfileRoot)["contentType"].as<string>();
 
-		encodingProfile.encodingProfileRoot = JSONUtils::asJson(encodingProfileRoot, "profile");
-		encodingProfile.fileFormat = JSONUtils::asString(encodingProfile.encodingProfileRoot, "fileFormat", "");
-		encodingProfile.description = JSONUtils::asString(encodingProfile.encodingProfileRoot, "description", "");
+		encodingProfile.encodingProfileRoot = JsonPath(&encodingProfileRoot)["profile"].as<json>();
+		encodingProfile.fileFormat = JsonPath(&encodingProfile.encodingProfileRoot)["fileFormat"].as<string>();
+		encodingProfile.description = JsonPath(&encodingProfile.encodingProfileRoot)["description"].as<string>();
 		if (deep)
 		{
 			if (encodingProfile.contentType == "video")
 			{
-				json videoInfoRoot = JSONUtils::asJson(encodingProfile.encodingProfileRoot, "video");
-				encodingProfile.videoDetails.codec = JSONUtils::asString(videoInfoRoot, "codec", "");
-				encodingProfile.videoDetails.profile = JSONUtils::asString(videoInfoRoot, "profile", "");
-				encodingProfile.videoDetails.twoPasses = JSONUtils::asBool(videoInfoRoot, "twoPasses", false);
-				encodingProfile.videoDetails.otherOutputParameters = JSONUtils::asString(videoInfoRoot, "otherOutputParameters", "");
-				encodingProfile.videoDetails.frameRate = JSONUtils::asInt32(videoInfoRoot, "frameRate", -1);
-				encodingProfile.videoDetails.keyFrameIntervalInSeconds = JSONUtils::asInt32(videoInfoRoot, "keyFrameIntervalInSeconds", -1);
+				json videoInfoRoot = JsonPath(&encodingProfile.encodingProfileRoot)["video"].as<json>();
+				encodingProfile.videoDetails.codec = JsonPath(&videoInfoRoot)["codec"].as<string>();
+				encodingProfile.videoDetails.profile = JsonPath(&videoInfoRoot)["profile"].as<string>();
+				encodingProfile.videoDetails.twoPasses = JsonPath(&videoInfoRoot)["twoPasses"].as<bool>(false);
+				encodingProfile.videoDetails.otherOutputParameters = JsonPath(&videoInfoRoot)["otherOutputParameters"].as<string>();
+				encodingProfile.videoDetails.frameRate = JsonPath(&videoInfoRoot)["frameRate"].as<int32_t>(-1);
+				encodingProfile.videoDetails.keyFrameIntervalInSeconds = JsonPath(&videoInfoRoot)["keyFrameIntervalInSeconds"].as<int32_t>(-1);
 				{
-					json bitRatesRoot = JSONUtils::asJson(videoInfoRoot, "bitRates", json::array());
+					json bitRatesRoot = JsonPath(&videoInfoRoot)["bitRates"].as<json>(json::array());
 					for (auto &[keyRoot, valRoot] : bitRatesRoot.items())
 					{
 						VideoBitRate videoBitRate;
 
-						videoBitRate.width = JSONUtils::asInt32(valRoot, "width", -1);
-						videoBitRate.height = JSONUtils::asInt32(valRoot, "height", -1);
-						videoBitRate.kBitRate = JSONUtils::asInt32(valRoot, "kBitRate", -1);
-						videoBitRate.forceOriginalAspectRatio = JSONUtils::asInt32(valRoot, "forceOriginalAspectRatio", -1);
-						videoBitRate.pad = JSONUtils::asInt32(valRoot, "pad", -1);
-						videoBitRate.kMaxRate = JSONUtils::asInt32(valRoot, "kMaxRate", -1);
-						videoBitRate.kBufferSize = JSONUtils::asInt32(valRoot, "kBufferSize", -1);
+						videoBitRate.width = JsonPath(&valRoot)["width"].as<int32_t>(-1);
+						videoBitRate.height = JsonPath(&valRoot)["height"].as<int32_t>(-1);
+						videoBitRate.kBitRate = JsonPath(&valRoot)["kBitRate"].as<int32_t>(-1);
+						videoBitRate.forceOriginalAspectRatio = JsonPath(&valRoot)["forceOriginalAspectRatio"].as<int32_t>(-1);
+						videoBitRate.pad = JsonPath(&valRoot)["pad"].as<int32_t>(-1);
+						videoBitRate.kMaxRate = JsonPath(&valRoot)["kMaxRate"].as<int32_t>(-1);
+						videoBitRate.kBufferSize = JsonPath(&valRoot)["kBufferSize"].as<int32_t>(-1);
 
 						encodingProfile.videoDetails.videoBitRates.push_back(videoBitRate);
 					}
 				}
 
-				json audioInfoRoot = JSONUtils::asJson(encodingProfile.encodingProfileRoot, "audio");
-				encodingProfile.audioDetails.codec = JSONUtils::asString(audioInfoRoot, "codec", "");
-				encodingProfile.audioDetails.otherOutputParameters = JSONUtils::asString(audioInfoRoot, "otherOutputParameters", "");
-				encodingProfile.audioDetails.channelsNumber = JSONUtils::asInt32(audioInfoRoot, "channelsNumber", -1);
-				encodingProfile.audioDetails.sampleRate = JSONUtils::asInt32(audioInfoRoot, "sampleRate", -1);
+				json audioInfoRoot = JsonPath(&encodingProfile.encodingProfileRoot)["audio"].as<json>();
+				encodingProfile.audioDetails.codec = JsonPath(&audioInfoRoot)["codec"].as<string>();
+				encodingProfile.audioDetails.otherOutputParameters = JsonPath(&audioInfoRoot)["otherOutputParameters"].as<string>();
+				encodingProfile.audioDetails.channelsNumber = JsonPath(&audioInfoRoot)["channelsNumber"].as<int32_t>(-1);
+				encodingProfile.audioDetails.sampleRate = JsonPath(&audioInfoRoot)["sampleRate"].as<int32_t>(-1);
 				{
-					json bitRatesRoot = JSONUtils::asJson(audioInfoRoot, "bitRates", json::array());
+					json bitRatesRoot = JsonPath(&audioInfoRoot)["bitRates"].as<json>(json::array());
 					for (auto &[keyRoot, valRoot] : bitRatesRoot.items())
-						encodingProfile.audioDetails.kBitRates.push_back(JSONUtils::asInt32(valRoot, "kBitRate", -1));
+						encodingProfile.audioDetails.kBitRates.push_back(JsonPath(&valRoot)["kBitRate"].as<int32_t>(-1));
 				}
 			}
 			else if (encodingProfile.contentType == "audio")
 			{
-				json audioInfoRoot = JSONUtils::asJson(encodingProfile.encodingProfileRoot, "audio");
-				encodingProfile.audioDetails.codec = JSONUtils::asString(audioInfoRoot, "codec", "");
-				encodingProfile.audioDetails.otherOutputParameters = JSONUtils::asString(audioInfoRoot, "otherOutputParameters", "");
-				encodingProfile.audioDetails.channelsNumber = JSONUtils::asInt32(audioInfoRoot, "channelsNumber", -1);
-				encodingProfile.audioDetails.sampleRate = JSONUtils::asInt32(audioInfoRoot, "sampleRate", -1);
+				json audioInfoRoot = JsonPath(&encodingProfile.encodingProfileRoot)["audio"].as<json>();
+				encodingProfile.audioDetails.codec = JsonPath(&audioInfoRoot)["codec"].as<string>();
+				encodingProfile.audioDetails.otherOutputParameters = JsonPath(&audioInfoRoot)["otherOutputParameters"].as<string>();
+				encodingProfile.audioDetails.channelsNumber = JsonPath(&audioInfoRoot)["channelsNumber"].as<int32_t>(-1);
+				encodingProfile.audioDetails.sampleRate = JsonPath(&audioInfoRoot)["sampleRate"].as<int32_t>(-1);
 				{
-					json bitRatesRoot = JSONUtils::asJson(audioInfoRoot, "bitRates", json::array());
+					json bitRatesRoot = JsonPath(&audioInfoRoot)["bitRates"].as<json>(json::array());
 					for (auto &[keyRoot, valRoot] : bitRatesRoot.items())
-						encodingProfile.audioDetails.kBitRates.push_back(JSONUtils::asInt32(valRoot, "kBitRate", -1));
+						encodingProfile.audioDetails.kBitRates.push_back(JsonPath(&valRoot)["kBitRate"].as<int32_t>(-1));
 				}
 			}
 			else if (encodingProfile.contentType == "image")
 			{
-				json imageInfoRoot = JSONUtils::asJson(encodingProfile.encodingProfileRoot, "image");
-				encodingProfile.imageDetails.width = JSONUtils::asInt32(imageInfoRoot, "width", -1);
-				encodingProfile.imageDetails.height = JSONUtils::asInt32(imageInfoRoot, "height", -1);
-				encodingProfile.imageDetails.aspectRatio = JSONUtils::asBool(imageInfoRoot, "aspectRatio", false);
-				encodingProfile.imageDetails.maxWidth = JSONUtils::asInt32(imageInfoRoot, "maxWidth", -1);
-				encodingProfile.imageDetails.maxHeight = JSONUtils::asInt32(imageInfoRoot, "maxHeight", -1);
-				encodingProfile.imageDetails.interlaceType = JSONUtils::asString(imageInfoRoot, "interlaceType", "");
+				json imageInfoRoot = JsonPath(&encodingProfile.encodingProfileRoot)["image"].as<json>();
+				encodingProfile.imageDetails.width = JsonPath(&imageInfoRoot)["width"].as<int32_t>(-1);
+				encodingProfile.imageDetails.height = JsonPath(&imageInfoRoot)["height"].as<int32_t>(-1);
+				encodingProfile.imageDetails.aspectRatio = JsonPath(&imageInfoRoot)["aspectRatio"].as<bool>(false);
+				encodingProfile.imageDetails.maxWidth = JsonPath(&imageInfoRoot)["maxWidth"].as<int32_t>(-1);
+				encodingProfile.imageDetails.maxHeight = JsonPath(&imageInfoRoot)["maxHeight"].as<int32_t>(-1);
+				encodingProfile.imageDetails.interlaceType = JsonPath(&imageInfoRoot)["interlaceType"].as<string>();
 			}
 		}
 
@@ -877,12 +853,12 @@ CatraMMSAPI::EncodingProfilesSet CatraMMSAPI::fillEncodingProfilesSet(json encod
 	{
 		CatraMMSAPI::EncodingProfilesSet encodingProfilesSet;
 
-		encodingProfilesSet.encodingProfilesSetKey = JSONUtils::asInt64(encodingProfilesSetRoot, "encodingProfilesSetKey", -1);
-		encodingProfilesSet.contentType = JSONUtils::asString(encodingProfilesSetRoot, "contentType", "");
-		encodingProfilesSet.label = JSONUtils::asString(encodingProfilesSetRoot, "label", "");
+		encodingProfilesSet.encodingProfilesSetKey = JsonPath(&encodingProfilesSetRoot)["encodingProfilesSetKey"].as<int64_t>(-1);
+		encodingProfilesSet.contentType = JsonPath(&encodingProfilesSetRoot)["contentType"].as<string>();
+		encodingProfilesSet.label = JsonPath(&encodingProfilesSetRoot)["label"].as<string>();
 		if (deep)
 		{
-			json encodingProfilesRoot = JSONUtils::asJson(encodingProfilesSetRoot, "encodingProfiles", json::array());
+			json encodingProfilesRoot = JsonPath(&encodingProfilesSetRoot)["encodingProfiles"].as<json>(json::array());
 			for (auto &[keyRoot, valRoot] : encodingProfilesRoot.items())
 				encodingProfilesSet.encodingProfiles.push_back(fillEncodingProfile(valRoot, deep));
 		}
@@ -906,10 +882,10 @@ CatraMMSAPI::EncodersPool CatraMMSAPI::fillEncodersPool(json encodersPoolRoot)
 	{
 		CatraMMSAPI::EncodersPool encodersPool;
 
-		encodersPool.encodersPoolKey = JSONUtils::asInt64(encodersPoolRoot, "encodersPoolKey", -1);
-		encodersPool.label = JSONUtils::asString(encodersPoolRoot, "label", "");
+		encodersPool.encodersPoolKey = JsonPath(&encodersPoolRoot)["encodersPoolKey"].as<int64_t>(-1);
+		encodersPool.label = JsonPath(&encodersPoolRoot)["label"].as<string>();
 		{
-			json encodersRoot = JSONUtils::asJson(encodersPoolRoot, "encoders", json::array());
+			json encodersRoot = JsonPath(&encodersPoolRoot)["encoders"].as<json>(json::array());
 			for (auto &[keyRoot, valRoot] : encodersRoot.items())
 				encodersPool.encoders.push_back(fillEncoder(valRoot));
 		}
@@ -933,17 +909,17 @@ CatraMMSAPI::Encoder CatraMMSAPI::fillEncoder(json encoderRoot)
 	{
 		CatraMMSAPI::Encoder encoder;
 
-		encoder.encoderKey = JSONUtils::asInt64(encoderRoot, "encoderKey", -1);
-		encoder.label = JSONUtils::asString(encoderRoot, "label", "");
-		encoder.external = JSONUtils::asBool(encoderRoot, "external", false);
-		encoder.enabled = JSONUtils::asBool(encoderRoot, "enabled", false);
-		encoder.protocol = JSONUtils::asString(encoderRoot, "protocol", "");
-		encoder.publicServerName = JSONUtils::asString(encoderRoot, "publicServerName", "");
-		encoder.internalServerName = JSONUtils::asString(encoderRoot, "internalServerName", "");
-		encoder.port = JSONUtils::asInt32(encoderRoot, "port", -1);
-		encoder.running = JSONUtils::asBool(encoderRoot, "running", false);
-		encoder.cpuUsage = JSONUtils::asInt32(encoderRoot, "cpuUsage", -1);
-		encoder.workspacesAssociatedRoot = JSONUtils::asJson(encoderRoot, "workspacesAssociated", json::array());
+		encoder.encoderKey = JsonPath(&encoderRoot)["encoderKey"].as<int64_t>(-1);
+		encoder.label = JsonPath(&encoderRoot)["label"].as<string>();
+		encoder.external = JsonPath(&encoderRoot)["external"].as<bool>(false);
+		encoder.enabled = JsonPath(&encoderRoot)["enabled"].as<bool>(false);
+		encoder.protocol = JsonPath(&encoderRoot)["protocol"].as<string>();
+		encoder.publicServerName = JsonPath(&encoderRoot)["publicServerName"].as<string>();
+		encoder.internalServerName = JsonPath(&encoderRoot)["internalServerName"].as<string>();
+		encoder.port = JsonPath(&encoderRoot)["port"].as<int32_t>(-1);
+		encoder.running = JsonPath(&encoderRoot)["running"].as<bool>(false);
+		encoder.cpuUsage = JsonPath(&encoderRoot)["cpuUsage"].as<int32_t>(-1);
+		encoder.workspacesAssociatedRoot = JsonPath(&encoderRoot)["workspacesAssociated"].as<json>(json::array());
 
 		return encoder;
 	}
@@ -964,17 +940,17 @@ CatraMMSAPI::RTMPChannelConf CatraMMSAPI::fillRTMPChannelConf(json rtmpChannelCo
 	{
 		RTMPChannelConf rtmpChannelConf;
 
-		rtmpChannelConf.confKey = JSONUtils::asInt64(rtmpChannelConfRoot, "confKey", -1);
-		rtmpChannelConf.label = JSONUtils::asString(rtmpChannelConfRoot, "label", "");
-		rtmpChannelConf.rtmpURL = JSONUtils::asString(rtmpChannelConfRoot, "rtmpURL", "");
-		rtmpChannelConf.streamName = JSONUtils::asString(rtmpChannelConfRoot, "streamName", "");
-		rtmpChannelConf.userName = JSONUtils::asString(rtmpChannelConfRoot, "userName", "");
-		rtmpChannelConf.password = JSONUtils::asString(rtmpChannelConfRoot, "password", "");
-		rtmpChannelConf.playURLDetails = JSONUtils::asJson(rtmpChannelConfRoot, "playURLDetails", json(nullptr));
-		rtmpChannelConf.type = JSONUtils::asString(rtmpChannelConfRoot, "type", "");
-		rtmpChannelConf.outputIndex = JSONUtils::asInt64(rtmpChannelConfRoot, "outputIndex", -1);
-		rtmpChannelConf.reservedByIngestionJobKey = JSONUtils::asInt64(rtmpChannelConfRoot, "reservedByIngestionJobKey", -1);
-		rtmpChannelConf.configurationLabel = JSONUtils::asString(rtmpChannelConfRoot, "configurationLabel", "");
+		rtmpChannelConf.confKey = JsonPath(&rtmpChannelConfRoot)["confKey"].as<int64_t>(-1);
+		rtmpChannelConf.label = JsonPath(&rtmpChannelConfRoot)["label"].as<string>();
+		rtmpChannelConf.rtmpURL = JsonPath(&rtmpChannelConfRoot)["rtmpURL"].as<string>();
+		rtmpChannelConf.streamName = JsonPath(&rtmpChannelConfRoot)["streamName"].as<string>();
+		rtmpChannelConf.userName = JsonPath(&rtmpChannelConfRoot)["userName"].as<string>();
+		rtmpChannelConf.password = JsonPath(&rtmpChannelConfRoot)["password"].as<string>();
+		rtmpChannelConf.playURLDetails = JsonPath(&rtmpChannelConfRoot)["playURLDetails"].as<json>(json(nullptr));
+		rtmpChannelConf.type = JsonPath(&rtmpChannelConfRoot)["type"].as<string>();
+		rtmpChannelConf.outputIndex = JsonPath(&rtmpChannelConfRoot)["outputIndex"].as<int64_t>(-1);
+		rtmpChannelConf.reservedByIngestionJobKey = JsonPath(&rtmpChannelConfRoot)["reservedByIngestionJobKey"].as<int64_t>(-1);
+		rtmpChannelConf.configurationLabel = JsonPath(&rtmpChannelConfRoot)["configurationLabel"].as<string>();
 
 		return rtmpChannelConf;
 	}
@@ -995,17 +971,17 @@ CatraMMSAPI::SRTChannelConf CatraMMSAPI::fillSRTChannelConf(json srtChannelConfR
 	{
 		CatraMMSAPI::SRTChannelConf srtChannelConf;
 
-		srtChannelConf.confKey = JSONUtils::asInt64(srtChannelConfRoot, "confKey", -1);
-		srtChannelConf.label = JSONUtils::asString(srtChannelConfRoot, "label", "");
-		srtChannelConf.srtURL = JSONUtils::asString(srtChannelConfRoot, "srtURL", "");
-		srtChannelConf.mode = JSONUtils::asString(srtChannelConfRoot, "mode", "caller");
-		srtChannelConf.streamId = JSONUtils::asString(srtChannelConfRoot, "streamId", "");
-		srtChannelConf.passphrase = JSONUtils::asString(srtChannelConfRoot, "passphrase", "");
-		srtChannelConf.playURL = JSONUtils::asString(srtChannelConfRoot, "playURL", "");
-		srtChannelConf.type = JSONUtils::asString(srtChannelConfRoot, "type", "");
-		srtChannelConf.outputIndex = JSONUtils::asInt64(srtChannelConfRoot, "outputIndex", -1);
-		srtChannelConf.reservedByIngestionJobKey = JSONUtils::asInt64(srtChannelConfRoot, "reservedByIngestionJobKey", -1);
-		srtChannelConf.configurationLabel = JSONUtils::asString(srtChannelConfRoot, "configurationLabel", "");
+		srtChannelConf.confKey = JsonPath(&srtChannelConfRoot)["confKey"].as<int64_t>(-1);
+		srtChannelConf.label = JsonPath(&srtChannelConfRoot)["label"].as<string>();
+		srtChannelConf.srtURL = JsonPath(&srtChannelConfRoot)["srtURL"].as<string>();
+		srtChannelConf.mode = JsonPath(&srtChannelConfRoot)["mode"].as<string>("caller");
+		srtChannelConf.streamId = JsonPath(&srtChannelConfRoot)["streamId"].as<string>();
+		srtChannelConf.passphrase = JsonPath(&srtChannelConfRoot)["passphrase"].as<string>();
+		srtChannelConf.playURL = JsonPath(&srtChannelConfRoot)["playURL"].as<string>();
+		srtChannelConf.type = JsonPath(&srtChannelConfRoot)["type"].as<string>();
+		srtChannelConf.outputIndex = JsonPath(&srtChannelConfRoot)["outputIndex"].as<int64_t>(-1);
+		srtChannelConf.reservedByIngestionJobKey = JsonPath(&srtChannelConfRoot)["reservedByIngestionJobKey"].as<int64_t>(-1);
+		srtChannelConf.configurationLabel = JsonPath(&srtChannelConfRoot)["configurationLabel"].as<string>();
 
 		return srtChannelConf;
 	}
