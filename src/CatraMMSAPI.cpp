@@ -17,91 +17,91 @@ using ordered_json = nlohmann::ordered_json;
 CatraMMSAPI::CatraMMSAPI(json &configurationRoot) : userProfile(), currentWorkspaceDetails()
 {
 	_apiTimeoutInSeconds = JsonPath(&configurationRoot)["mms"]["api"]["timeoutInSeconds"].as<int32_t>(15);
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->timeoutInSeconds: {}",
 		_apiTimeoutInSeconds
 	);
 
 	_apiMaxRetries = JsonPath(&configurationRoot)["mms"]["api"]["maxRetries"].as<int32_t>(1);
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->api->maxRetries: {}",
 		_apiMaxRetries
 	);
 
 	_statisticsTimeoutInSeconds = JsonPath(&configurationRoot)["mms"]["statistics"]["timeoutInSeconds"].as<int32_t>(30);
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->statistics->timeoutInSeconds: {}",
 		_statisticsTimeoutInSeconds
 	);
 
 	_deliveryMaxRetries = JsonPath(&configurationRoot)["mms"]["delivery"]["maxRetriesNumber"].as<int32_t>(2);
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->delivery->maxRetriesNumber: {}",
 		_deliveryMaxRetries
 	);
 
 	_apiProtocol = JsonPath(&configurationRoot)["mms"]["api"]["protocol"].as<string>("https");
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->api->protocol: {}",
 		_apiProtocol
 	);
 
 	_apiHostname = JsonPath(&configurationRoot)["mms"]["api"]["hostname"].as<string>("mms-api.catramms-cloud.com");
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->api->hostname: {}",
 		_apiHostname
 	);
 
 	_apiPort = JsonPath(&configurationRoot)["mms"]["api"]["port"].as<int32_t>(443);
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->api->port: {}",
 		_apiPort
 	);
 
 	_binaryProtocol = JsonPath(&configurationRoot)["mms"]["binary"]["protocol"].as<string>("https");
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->binary->protocol: {}",
 		_binaryProtocol
 	);
 
 	_binaryHostname = JsonPath(&configurationRoot)["mms"]["binary"]["v"].as<string>("mms-binary.catramms-cloud.com");
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->binary->hostname: {}",
 		_binaryHostname
 	);
 
-	_binaryPort = JsonPath(&configurationRoot)["mms"]["binary"]["port"].as<int32_t>(80);
-	SPDLOG_DEBUG(
+	_binaryPort = JsonPath(&configurationRoot)["mms"]["binary"]["port"].as<int32_t>(443);
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->binary->port: {}",
 		_binaryPort
 	);
 
 	_binaryTimeoutInSeconds = JsonPath(&configurationRoot)["mms"]["binary"]["timeoutInSeconds"].as<int32_t>(180);
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->binary->timeoutInSeconds: {}",
 		_binaryTimeoutInSeconds
 	);
 
 	_binaryMaxRetries = JsonPath(&configurationRoot)["mms"]["binary"]["maxRetries"].as<int32_t>(1);
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->binary->maxRetries: {}",
 		_binaryMaxRetries
 	);
 
 	_outputToBeCompressed = JsonPath(&configurationRoot)["mms"]["outputToBeCompressed"].as<bool>(true);
-	SPDLOG_DEBUG(
+	LOG_DEBUG(
 		"Configuration item"
 		", mms->outputToBeCompressed: {}",
 		_outputToBeCompressed
@@ -149,7 +149,7 @@ void CatraMMSAPI::login(string userName, string password, string clientIPAddress
 		try
 		{
 			string url = "https://api.ipify.org?format=json";
-			SPDLOG_INFO(
+			LOG_INFO(
 				"httpGetJson"
 				", url: {}"
 				", apiTimeoutInSeconds: {}",
@@ -157,7 +157,7 @@ void CatraMMSAPI::login(string userName, string password, string clientIPAddress
 			);
 			json clientIPRoot = CurlWrapper::httpGetJson(url, _apiTimeoutInSeconds);
 			clientIPAddress = JsonPath(&clientIPRoot)["ip"].as<string>();
-			SPDLOG_INFO(
+			LOG_INFO(
 				"httpGetJson"
 				", url: {}"
 				", clientIPAddress: {}",
@@ -190,7 +190,7 @@ void CatraMMSAPI::login(string userName, string password, string clientIPAddress
 		if (!clientIPAddress.empty())
 			bodyRoot["remoteClientIPAddress"] = clientIPAddress;
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"httpPostStringAndGetJson"
 			", url: {}"
 			", body: {}",
@@ -250,7 +250,7 @@ pair<CatraMMSAPI::IngestionResult, vector<CatraMMSAPI::IngestionResult>> CatraMM
 	{
 		string url = std::format("{}://{}:{}/catramms/1.0.1/workflow", _apiProtocol, _apiHostname, _apiPort);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"httpGetJson"
 			", url: {}"
 			", _outputToBeCompressed: {}",
@@ -315,7 +315,7 @@ void CatraMMSAPI::ingestionBinary(int64_t addContentIngestionJobKey, string path
 	{
 		string url = std::format("{}://{}:{}/catramms/1.0.1/binary/{}", _binaryProtocol, _binaryHostname, _binaryPort, addContentIngestionJobKey);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"httpGetJson"
 			", url: {}"
 			", _outputToBeCompressed: {}",
@@ -365,7 +365,7 @@ vector<CatraMMSAPI::EncodingProfile> CatraMMSAPI::getEncodingProfiles(string con
 		}
 		url += std::format("{}should_bypass_cache={}", queryChar, cacheAllowed);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"httpGetJson"
 			", url: {}"
 			", _outputToBeCompressed: {}",
@@ -421,7 +421,7 @@ vector<CatraMMSAPI::EncodingProfilesSet> CatraMMSAPI::getEncodingProfilesSets(st
 		char queryChar = '?';
 		url += std::format("{}should_bypass_cache={}", queryChar, cacheAllowed);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"httpGetJson"
 			", url: {}"
 			", _outputToBeCompressed: {}",
@@ -477,7 +477,7 @@ vector<CatraMMSAPI::EncodersPool> CatraMMSAPI::getEncodersPool(bool cacheAllowed
 		char queryChar = '?';
 		url += std::format("{}should_bypass_cache={}", queryChar, cacheAllowed);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"httpGetJson"
 			", url: {}"
 			", _outputToBeCompressed: {}",
@@ -541,7 +541,7 @@ vector<CatraMMSAPI::RTMPChannelConf> CatraMMSAPI::getRTMPChannelConf(string labe
 			url += std::format("{}type={}", queryChar, CurlWrapper::escape(label));
 		url += std::format("{}should_bypass_cache={}", queryChar, cacheAllowed);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"httpGetJson"
 			", url: {}"
 			", _outputToBeCompressed: {}",
@@ -578,7 +578,7 @@ vector<CatraMMSAPI::RTMPChannelConf> CatraMMSAPI::getRTMPChannelConf(string labe
 	}
 }
 
-vector<CatraMMSAPI::SRTChannelConf> CatraMMSAPI::getSRTChannelConf(string label, bool labelLike, string type, bool cacheAllowed)
+vector<CatraMMSAPI::SRTChannelConf> CatraMMSAPI::getSRTChannelConf(const string& label, bool labelLike, const string& type, bool cacheAllowed)
 {
 	string api = "getSRTChannelConf";
 
@@ -605,7 +605,7 @@ vector<CatraMMSAPI::SRTChannelConf> CatraMMSAPI::getSRTChannelConf(string label,
 			url += std::format("{}type={}", queryChar, CurlWrapper::escape(label));
 		url += std::format("{}should_bypass_cache={}", queryChar, cacheAllowed);
 
-		SPDLOG_INFO(
+		LOG_INFO(
 			"httpGetJson"
 			", url: {}"
 			", _outputToBeCompressed: {}",
@@ -613,7 +613,7 @@ vector<CatraMMSAPI::SRTChannelConf> CatraMMSAPI::getSRTChannelConf(string label,
 		);
 		vector<string> otherHeaders;
 		if (_outputToBeCompressed)
-			otherHeaders.push_back("X-ResponseBodyCompressed: true");
+			otherHeaders.emplace_back("X-ResponseBodyCompressed: true");
 		json mmsInfoRoot = CurlWrapper::httpGetJson(
 			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
 			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
@@ -642,7 +642,127 @@ vector<CatraMMSAPI::SRTChannelConf> CatraMMSAPI::getSRTChannelConf(string label,
 	}
 }
 
-CatraMMSAPI::UserProfile CatraMMSAPI::fillUserProfile(json userProfileRoot)
+pair<vector<CatraMMSAPI::Stream>, int16_t> CatraMMSAPI::getStreams(
+	optional<int32_t> startIndex, optional<int32_t> pageSize,
+	optional<int64_t> confKey,
+	optional<string> label, optional<bool> labelLike,
+	optional<string>url,
+	optional<string> sourceType, optional<string> type,
+	optional<string> name,
+	optional<string> region, optional<string> country,
+	const string& labelOrder, bool cacheAllowed)
+{
+	string api = "getStream";
+
+	if (!_loginSuccessful)
+	{
+		string errorMessage = "login API was not called yet";
+		SPDLOG_ERROR(errorMessage);
+
+		throw runtime_error(errorMessage);
+	}
+
+	try
+	{
+		string apiUrl = std::format("{}://{}:{}/catramms/1.0.1/conf/stream", _apiProtocol, _apiHostname, _apiPort);
+		if (confKey)
+			apiUrl += std::format("/{}", *confKey);
+		char queryChar = '?';
+		if (startIndex)
+		{
+			apiUrl += std::format("{}start={}", queryChar, *startIndex);
+			queryChar = '&';
+		}
+		if (pageSize)
+		{
+			apiUrl += std::format("{}rows={}", queryChar, *pageSize);
+			queryChar = '&';
+		}
+		if (label)
+		{
+			apiUrl += std::format("{}label={}", queryChar, CurlWrapper::escape(*label));
+			queryChar = '&';
+		}
+		if (labelLike)
+		{
+			apiUrl += std::format("{}labelLike={}", queryChar, *labelLike);
+			queryChar = '&';
+		}
+		if (url)
+		{
+			apiUrl += std::format("{}url={}", queryChar, CurlWrapper::escape(*url));
+			queryChar = '&';
+		}
+		if (sourceType)
+		{
+			apiUrl += std::format("{}sourceType={}", queryChar, *sourceType);
+			queryChar = '&';
+		}
+		if (type)
+		{
+			apiUrl += std::format("{}type={}", queryChar, CurlWrapper::escape(*type));
+			queryChar = '&';
+		}
+		if (name)
+		{
+			apiUrl += std::format("{}name={}", queryChar, CurlWrapper::escape(*name));
+			queryChar = '&';
+		}
+		if (region)
+		{
+			apiUrl += std::format("{}region={}", queryChar, CurlWrapper::escape(*region));
+			queryChar = '&';
+		}
+		if (country)
+		{
+			apiUrl += std::format("{}country={}", queryChar, CurlWrapper::escape(*country));
+			queryChar = '&';
+		}
+		{
+			apiUrl += std::format("{}labelOrder={}", queryChar, labelOrder);
+			queryChar = '&';
+		}
+		apiUrl += std::format("{}should_bypass_cache={}", queryChar, cacheAllowed);
+
+		LOG_INFO(
+			"httpGetJson"
+			", apiUrl: {}"
+			", _outputToBeCompressed: {}",
+			apiUrl, _outputToBeCompressed
+		);
+		vector<string> otherHeaders;
+		if (_outputToBeCompressed)
+			otherHeaders.emplace_back("X-ResponseBodyCompressed: true");
+		json mmsInfoRoot = CurlWrapper::httpGetJson(
+			apiUrl, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
+			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
+		);
+
+		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
+		auto numFound = JsonPath(&responseRoot)["numFound"].as<int16_t>();
+		auto streamsRoot = JsonPath(&responseRoot)["streams"].as<json>(json::array());
+
+		vector<Stream> streams;
+
+		for (auto &[keyRoot, valRoot] : streamsRoot.items())
+			streams.push_back(fillStream(valRoot));
+
+		return make_pair(streams, numFound);
+	}
+	catch (exception &e)
+	{
+		string errorMessage = std::format(
+			"{} failed"
+			", exception: {}",
+			api, e.what()
+		);
+		SPDLOG_ERROR(errorMessage);
+
+		throw;
+	}
+}
+
+CatraMMSAPI::UserProfile CatraMMSAPI::fillUserProfile(const json& userProfileRoot)
 {
 	try
 	{
@@ -671,11 +791,11 @@ CatraMMSAPI::UserProfile CatraMMSAPI::fillUserProfile(json userProfileRoot)
 	}
 }
 
-CatraMMSAPI::WorkspaceDetails CatraMMSAPI::fillWorkspaceDetails(json workspacedetailsRoot)
+CatraMMSAPI::WorkspaceDetails CatraMMSAPI::fillWorkspaceDetails(const json& workspacedetailsRoot)
 {
 	try
 	{
-		CatraMMSAPI::WorkspaceDetails workspaceDetails;
+		WorkspaceDetails workspaceDetails;
 
 		workspaceDetails.workspaceKey = JsonPath(&workspacedetailsRoot)["workspaceKey"].as<int64_t>(-1);
 		workspaceDetails.enabled = JsonPath(&workspacedetailsRoot)["enabled"].as<bool>(false);
@@ -755,11 +875,11 @@ CatraMMSAPI::WorkspaceDetails CatraMMSAPI::fillWorkspaceDetails(json workspacede
 	}
 }
 
-CatraMMSAPI::EncodingProfile CatraMMSAPI::fillEncodingProfile(json encodingProfileRoot, bool deep)
+CatraMMSAPI::EncodingProfile CatraMMSAPI::fillEncodingProfile(const json& encodingProfileRoot, const bool deep)
 {
 	try
 	{
-		CatraMMSAPI::EncodingProfile encodingProfile;
+		EncodingProfile encodingProfile;
 
 		encodingProfile.global = JsonPath(&encodingProfileRoot)["global"].as<bool>(false);
 		encodingProfile.encodingProfileKey = JsonPath(&encodingProfileRoot)["encodingProfileKey"].as<int64_t>(-1);
@@ -847,11 +967,11 @@ CatraMMSAPI::EncodingProfile CatraMMSAPI::fillEncodingProfile(json encodingProfi
 	}
 }
 
-CatraMMSAPI::EncodingProfilesSet CatraMMSAPI::fillEncodingProfilesSet(json encodingProfilesSetRoot, bool deep)
+CatraMMSAPI::EncodingProfilesSet CatraMMSAPI::fillEncodingProfilesSet(const json& encodingProfilesSetRoot, const bool deep)
 {
 	try
 	{
-		CatraMMSAPI::EncodingProfilesSet encodingProfilesSet;
+		EncodingProfilesSet encodingProfilesSet;
 
 		encodingProfilesSet.encodingProfilesSetKey = JsonPath(&encodingProfilesSetRoot)["encodingProfilesSetKey"].as<int64_t>(-1);
 		encodingProfilesSet.contentType = JsonPath(&encodingProfilesSetRoot)["contentType"].as<string>();
@@ -876,11 +996,11 @@ CatraMMSAPI::EncodingProfilesSet CatraMMSAPI::fillEncodingProfilesSet(json encod
 	}
 }
 
-CatraMMSAPI::EncodersPool CatraMMSAPI::fillEncodersPool(json encodersPoolRoot)
+CatraMMSAPI::EncodersPool CatraMMSAPI::fillEncodersPool(const json& encodersPoolRoot)
 {
 	try
 	{
-		CatraMMSAPI::EncodersPool encodersPool;
+		EncodersPool encodersPool;
 
 		encodersPool.encodersPoolKey = JsonPath(&encodersPoolRoot)["encodersPoolKey"].as<int64_t>(-1);
 		encodersPool.label = JsonPath(&encodersPoolRoot)["label"].as<string>();
@@ -903,11 +1023,11 @@ CatraMMSAPI::EncodersPool CatraMMSAPI::fillEncodersPool(json encodersPoolRoot)
 	}
 }
 
-CatraMMSAPI::Encoder CatraMMSAPI::fillEncoder(json encoderRoot)
+CatraMMSAPI::Encoder CatraMMSAPI::fillEncoder(const json& encoderRoot)
 {
 	try
 	{
-		CatraMMSAPI::Encoder encoder;
+		Encoder encoder;
 
 		encoder.encoderKey = JsonPath(&encoderRoot)["encoderKey"].as<int64_t>(-1);
 		encoder.label = JsonPath(&encoderRoot)["label"].as<string>();
@@ -965,11 +1085,11 @@ CatraMMSAPI::RTMPChannelConf CatraMMSAPI::fillRTMPChannelConf(json rtmpChannelCo
 	}
 }
 
-CatraMMSAPI::SRTChannelConf CatraMMSAPI::fillSRTChannelConf(json srtChannelConfRoot)
+CatraMMSAPI::SRTChannelConf CatraMMSAPI::fillSRTChannelConf(const json& srtChannelConfRoot)
 {
 	try
 	{
-		CatraMMSAPI::SRTChannelConf srtChannelConf;
+		SRTChannelConf srtChannelConf;
 
 		srtChannelConf.confKey = JsonPath(&srtChannelConfRoot)["confKey"].as<int64_t>(-1);
 		srtChannelConf.label = JsonPath(&srtChannelConfRoot)["label"].as<string>();
@@ -989,6 +1109,57 @@ CatraMMSAPI::SRTChannelConf CatraMMSAPI::fillSRTChannelConf(json srtChannelConfR
 	{
 		SPDLOG_ERROR(
 			"fillSRTChannelConf failed"
+			", exception: {}",
+			e.what()
+		);
+		throw;
+	}
+}
+
+CatraMMSAPI::Stream CatraMMSAPI::fillStream(const json& streamRoot)
+{
+	try
+	{
+		Stream stream;
+
+		stream.confKey = JsonPath(&streamRoot)["confKey"].as<int64_t>(-1);
+		stream.label = JsonPath(&streamRoot)["label"].as<string>();
+		stream.sourceType = JsonPath(&streamRoot)["sourceType"].as<string>();
+		stream.encodersPoolKey = JsonPath(&streamRoot)["encodersPoolKey"].as<int64_t>(-1);
+		stream.encodersPoolLabel = JsonPath(&streamRoot)["encodersPoolLabel"].as<string>();
+		stream.url = JsonPath(&streamRoot)["url"].as<string>();
+		stream.pushProtocol = JsonPath(&streamRoot)["pushProtocol"].as<string>();
+		stream.pushEncoderKey = JsonPath(&streamRoot)["pushEncoderKey"].as<int64_t>(-1);
+		stream.pushPublicEncoderName = JsonPath(&streamRoot)["pushPublicEncoderName"].as<bool>(false);
+		stream.pushEncoderLabel = JsonPath(&streamRoot)["pushEncoderLabel"].as<string>();
+		stream.pushEncoderName = JsonPath(&streamRoot)["pushEncoderName"].as<string>();
+		stream.pushServerPort = JsonPath(&streamRoot)["pushServerPort"].as<int16_t>(-1);
+		stream.pushURI = JsonPath(&streamRoot)["pushUri"].as<string>();
+		stream.pushListenTimeout = JsonPath(&streamRoot)["pushListenTimeout"].as<int16_t>(-1);
+		stream.captureLiveVideoDeviceNumber = JsonPath(&streamRoot)["captureLiveVideoDeviceNumber"].as<int16_t>(-1);
+		stream.captureLiveVideoInputFormat = JsonPath(&streamRoot)["captureLiveVideoInputFormat"].as<string>();
+		stream.captureLiveFrameRate = JsonPath(&streamRoot)["captureLiveFrameRate"].as<int16_t>(-1);
+		stream.captureLiveWidth = JsonPath(&streamRoot)["captureLiveWidth"].as<int16_t>(-1);
+		stream.captureLiveHeight = JsonPath(&streamRoot)["captureLiveHeight"].as<int16_t>(-1);
+		stream.captureLiveAudioDeviceNumber = JsonPath(&streamRoot)["captureLiveAudioDeviceNumber"].as<int16_t>(-1);
+		stream.captureLiveChannelsNumber = JsonPath(&streamRoot)["captureLiveChannelsNumber"].as<int16_t>(-1);
+		stream.tvSourceTVConfKey = JsonPath(&streamRoot)["tvSourceTVConfKey"].as<int64_t>(-1);
+		stream.type = JsonPath(&streamRoot)["type"].as<string>();
+		stream.description = JsonPath(&streamRoot)["description"].as<string>();
+		stream.name = JsonPath(&streamRoot)["name"].as<string>();
+		stream.region = JsonPath(&streamRoot)["region"].as<string>();
+		stream.country = JsonPath(&streamRoot)["country"].as<string>();
+		stream.imageMediaItemKey = JsonPath(&streamRoot)["imageMediaItemKey"].as<int64_t>(-1);
+		stream.imageUniqueName = JsonPath(&streamRoot)["imageUniqueName"].as<string>();
+		stream.position = JsonPath(&streamRoot)["position"].as<int16_t>(-1);
+		stream.userData = JsonPath(&streamRoot)["userData"].as<string>();
+
+		return stream;
+	}
+	catch (exception &e)
+	{
+		SPDLOG_ERROR(
+			"fillStream failed"
 			", exception: {}",
 			e.what()
 		);

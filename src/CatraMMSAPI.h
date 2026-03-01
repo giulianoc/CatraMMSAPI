@@ -211,6 +211,43 @@ class CatraMMSAPI
 		std::string configurationLabel;
 	};
 
+	struct Stream
+	{
+		int64_t confKey;
+		std::string label;
+		int64_t encodersPoolKey;
+		std::string encodersPoolLabel; // calcolato
+		std::string url;
+		std::string type;
+		std::string description;
+		std::string name;
+		std::string region;
+		std::string country;
+		int64_t imageMediaItemKey;
+		std::string imageUniqueName;
+		int16_t position;
+		std::string userData;
+
+		std::string sourceType;
+
+		std::string pushProtocol;
+		int64_t pushEncoderKey;
+		bool pushPublicEncoderName; // encoderKey non è sufficiente, pushEncoderName indica il nome del server publico o privato
+		std::string pushEncoderLabel; // this is a calculated field
+		std::string pushEncoderName;	// this is a calculated field;
+		int16_t pushServerPort;
+		std::string pushURI;
+		int16_t pushListenTimeout;
+		int16_t captureLiveVideoDeviceNumber;
+		std::string captureLiveVideoInputFormat;
+		int16_t captureLiveFrameRate;
+		int16_t captureLiveWidth;
+		int16_t captureLiveHeight;
+		int16_t captureLiveAudioDeviceNumber;
+		int16_t captureLiveChannelsNumber;
+		int64_t tvSourceTVConfKey;
+	};
+
 	explicit CatraMMSAPI(nlohmann::json &configurationRoot);
 	~CatraMMSAPI() = default;
 
@@ -227,9 +264,16 @@ class CatraMMSAPI
 	std::vector<EncodersPool> getEncodersPool(bool cacheAllowed = true);
 	std::vector<EncodingProfilesSet> getEncodingProfilesSets(std::string contentType, bool cacheAllowed = true);
 	std::vector<RTMPChannelConf> getRTMPChannelConf(std::string label = "", bool labelLike = true, std::string type = "", bool cacheAllowed = true);
-	std::vector<SRTChannelConf> getSRTChannelConf(std::string label = "", bool labelLike = true, std::string type = "", bool cacheAllowed = true);
+	std::vector<SRTChannelConf> getSRTChannelConf(const std::string& label = "", bool labelLike = true, const std::string& type = "", bool cacheAllowed = true);
 	std::pair<IngestionResult, std::vector<IngestionResult>> ingestionWorkflow(nlohmann::json workflowRoot);
 	void ingestionBinary(int64_t addContentIngestionJobKey, std::string pathFileName, std::function<bool(int, int)> chunkCompleted);
+	std::pair<std::vector<Stream>, int16_t> getStreams(
+		std::optional<int> startIndex = std::nullopt, std::optional<int> pageSize = std::nullopt, std::optional<int64_t> confKey = std::nullopt,
+		std::optional<std::string> label = std::nullopt, std::optional<bool> labelLike = std::nullopt, std::optional<std::string> url = std::nullopt,
+		std::optional<std::string> sourceType = std::nullopt, std::optional<std::string> type = std::nullopt,
+		std::optional<std::string> name = std::nullopt, std::optional<std::string> region = std::nullopt,
+		std::optional<std::string> country = std::nullopt, const std::string &labelOrder = "asc", bool cacheAllowed = true
+	);
 
   private:
 	bool _loginSuccessful;
@@ -250,12 +294,14 @@ class CatraMMSAPI
 	int32_t _binaryMaxRetries;
 	bool _outputToBeCompressed;
 
-	UserProfile fillUserProfile(nlohmann::json userProfileRoot);
-	WorkspaceDetails fillWorkspaceDetails(nlohmann::json workspacedetailsRoot);
-	EncodingProfile fillEncodingProfile(nlohmann::json encodingProfileRoot, bool deep);
-	EncodingProfilesSet fillEncodingProfilesSet(nlohmann::json encodingProfilesSetRoot, bool deep);
-	EncodersPool fillEncodersPool(nlohmann::json encodersPoolRoot);
-	Encoder fillEncoder(nlohmann::json encoderRoot);
+	static UserProfile fillUserProfile(const nlohmann::json& userProfileRoot);
+	static WorkspaceDetails fillWorkspaceDetails(const nlohmann::json &workspacedetailsRoot);
+	static EncodingProfile fillEncodingProfile(const nlohmann::json& encodingProfileRoot, bool deep);
+	static EncodingProfilesSet fillEncodingProfilesSet(const nlohmann::json& encodingProfilesSetRoot, bool deep);
+	static EncodersPool fillEncodersPool(const nlohmann::json& encodersPoolRoot);
+	static Encoder fillEncoder(const nlohmann::json& encoderRoot);
 	RTMPChannelConf fillRTMPChannelConf(nlohmann::json rtmpChannelConfRoot);
-	SRTChannelConf fillSRTChannelConf(nlohmann::json srtChannelConfRoot);
+	static SRTChannelConf fillSRTChannelConf(const nlohmann::json& srtChannelConfRoot);
+	static Stream fillStream(const nlohmann::json& streamRoot);
+
 };
