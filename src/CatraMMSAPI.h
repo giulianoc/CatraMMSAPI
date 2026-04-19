@@ -84,6 +84,9 @@ class CatraMMSAPI
 		bool cancelIngestionJob;
 		bool editEncodersPool;
 		bool applicationRecorder;
+		bool appUploadMediaContent;
+		bool appCaptureScreenAndProxy;
+		bool appStreamAndProxy;
 
 		// this field is used by the GUI
 		std::vector<Cost> dedicatedResources;
@@ -266,7 +269,7 @@ class CatraMMSAPI
 	std::vector<RTMPChannelConf> getRTMPChannelConf(std::string label = "", bool labelLike = true, std::string type = "", bool cacheAllowed = true);
 	std::vector<SRTChannelConf> getSRTChannelConf(const std::string& label = "", bool labelLike = true, const std::string& type = "", bool cacheAllowed = true);
 	std::pair<IngestionResult, std::vector<IngestionResult>> ingestionWorkflow(nlohmann::json workflowRoot);
-	void ingestionBinary(int64_t addContentIngestionJobKey, std::string pathFileName, std::function<bool(int, int)> chunkCompleted);
+	void ingestionBinary(int64_t addContentIngestionJobKey, const std::string& pathFileName, std::function<bool(int, int)> chunkCompleted);
 	std::pair<std::vector<Stream>, int16_t> getStreams(
 		std::optional<int> startIndex = std::nullopt, std::optional<int> pageSize = std::nullopt, std::optional<int64_t> confKey = std::nullopt,
 		std::optional<std::string> label = std::nullopt, std::optional<bool> labelLike = std::nullopt, std::optional<std::string> url = std::nullopt,

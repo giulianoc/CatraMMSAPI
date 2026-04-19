@@ -299,7 +299,7 @@ pair<CatraMMSAPI::IngestionResult, vector<CatraMMSAPI::IngestionResult>> CatraMM
 	}
 }
 
-void CatraMMSAPI::ingestionBinary(int64_t addContentIngestionJobKey, string pathFileName, function<bool(int, int)> chunkCompleted)
+void CatraMMSAPI::ingestionBinary(int64_t addContentIngestionJobKey, const string& pathFileName, function<bool(int, int)> chunkCompleted)
 {
 	string api = "ingestionBinary";
 
@@ -313,7 +313,8 @@ void CatraMMSAPI::ingestionBinary(int64_t addContentIngestionJobKey, string path
 
 	try
 	{
-		string url = std::format("{}://{}:{}/catramms/1.0.1/binary/{}", _binaryProtocol, _binaryHostname, _binaryPort, addContentIngestionJobKey);
+		string url = std::format("{}://{}:{}/catramms/1.0.1/binary/{}", _binaryProtocol, _binaryHostname, _binaryPort,
+			addContentIngestionJobKey);
 
 		LOG_INFO(
 			"httpGetJson"
@@ -323,8 +324,9 @@ void CatraMMSAPI::ingestionBinary(int64_t addContentIngestionJobKey, string path
 		);
 
 		string sResponse = CurlWrapper::httpPostFileSplittingInChunks(
-			url, _binaryTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
-			pathFileName, chunkCompleted, "", _binaryMaxRetries, _binaryTimeoutInSeconds
+			url, _binaryTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey),
+			currentWorkspaceDetails.apiKey), pathFileName, chunkCompleted, "", _binaryMaxRetries,
+			_binaryTimeoutInSeconds
 		);
 	}
 	catch (exception &e)
@@ -843,6 +845,9 @@ CatraMMSAPI::WorkspaceDetails CatraMMSAPI::fillWorkspaceDetails(const json& work
 			workspaceDetails.cancelIngestionJob = JsonPath(&userAPIKeyRoot)["cancelIngestionJob"].as<bool>(false);
 			workspaceDetails.editEncodersPool = JsonPath(&userAPIKeyRoot)["editEncodersPool"].as<bool>(false);
 			workspaceDetails.applicationRecorder = JsonPath(&userAPIKeyRoot)["applicationRecorder"].as<bool>(false);
+			workspaceDetails.appUploadMediaContent = JsonPath(&userAPIKeyRoot)["appUploadMediaContent"].as<bool>(false);
+			workspaceDetails.appCaptureScreenAndProxy = JsonPath(&userAPIKeyRoot)["appCaptureScreenAndProxy"].as<bool>(false);
+			workspaceDetails.appStreamAndProxy = JsonPath(&userAPIKeyRoot)["appStreamAndProxy"].as<bool>(false);
 		}
 		if (JSONUtils::isPresent(workspacedetailsRoot, "cost"))
 		{
