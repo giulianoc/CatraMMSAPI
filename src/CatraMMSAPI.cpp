@@ -44,6 +44,13 @@ CatraMMSAPI::CatraMMSAPI(json &configurationRoot) : userProfile(), currentWorksp
 		_deliveryMaxRetries
 	);
 
+	_apiVerbose = JsonPath(&configurationRoot)["mms"]["api"]["verbose"].as<bool>(false);
+	LOG_DEBUG(
+		"Configuration item"
+		", mms->api->verbose: {}",
+		_apiVerbose
+	);
+
 	_apiProtocol = JsonPath(&configurationRoot)["mms"]["api"]["protocol"].as<string>("https");
 	LOG_DEBUG(
 		"Configuration item"
@@ -193,11 +200,14 @@ void CatraMMSAPI::login(string userName, string password, string clientIPAddress
 		LOG_INFO(
 			"httpPostStringAndGetJson"
 			", url: {}"
+			", _apiVerbose: {}"
 			", body: {}",
-			url, "..." // JSONUtils::toString(bodyRoot) commentato per evitare di mostrare la password
+			url, _apiVerbose, "..." // JSONUtils::toString(bodyRoot) commentato per evitare di mostrare la password
 		);
 		json mmsInfoRoot = CurlWrapper::httpPostStringAndGetJson(
-			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), JSONUtils::toString(bodyRoot)
+			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), JSONUtils::toString(bodyRoot),
+			"application/json", std::vector<std::string>(), "", 0,
+			15, false, _apiVerbose
 		);
 
 		userProfile = fillUserProfile(mmsInfoRoot);
@@ -205,9 +215,8 @@ void CatraMMSAPI::login(string userName, string password, string clientIPAddress
 
 		if (!JSONUtils::isPresent(mmsInfoRoot, "workspace"))
 		{
-			string errorMessage = "No valid Workspace available for the User. Please contact the administrator"
-								  ", userName: {}",
-				   userName;
+			string errorMessage = std::format("No valid Workspace available for the User. Please contact the administrator"
+				", userName: {}", userName);
 			SPDLOG_ERROR(errorMessage);
 
 			throw runtime_error(errorMessage);
