@@ -44,11 +44,30 @@ CatraMMSAPI::CatraMMSAPI(json &configurationRoot) : userProfile(), currentWorksp
 		_deliveryMaxRetries
 	);
 
-	_apiVerbose = JsonPath(&configurationRoot)["mms"]["api"]["verbose"].as<bool>(false);
+	_httpVerbose = JsonPath(&configurationRoot)["mms"]["httpVerbose"].as<bool>(false);
 	LOG_DEBUG(
 		"Configuration item"
-		", mms->api->verbose: {}",
-		_apiVerbose
+		", mms->httpVerbose: {}",
+		_httpVerbose
+	);
+
+	_proxyURL = JsonPath(&configurationRoot)["mms"]["proxy"]["url"].as<string>("");
+	LOG_DEBUG(
+		"Configuration item"
+		", mms->proxy->url: {}",
+		_proxyURL
+	);
+	_proxyUsername = JsonPath(&configurationRoot)["mms"]["proxy"]["username"].as<string>("");
+	LOG_DEBUG(
+		"Configuration item"
+		", mms->proxy->username: {}",
+		_proxyUsername
+	);
+	_proxyPassword = JsonPath(&configurationRoot)["mms"]["proxy"]["password"].as<string>("");
+	LOG_DEBUG(
+		"Configuration item"
+		", mms->proxy->password: {}",
+		_proxyPassword
 	);
 
 	_apiProtocol = JsonPath(&configurationRoot)["mms"]["api"]["protocol"].as<string>("https");
@@ -79,7 +98,7 @@ CatraMMSAPI::CatraMMSAPI(json &configurationRoot) : userProfile(), currentWorksp
 		_binaryProtocol
 	);
 
-	_binaryHostname = JsonPath(&configurationRoot)["mms"]["binary"]["v"].as<string>("mms-binary.catramms-cloud.com");
+	_binaryHostname = JsonPath(&configurationRoot)["mms"]["binary"]["hostname"].as<string>("mms-binary.catramms-cloud.com");
 	LOG_DEBUG(
 		"Configuration item"
 		", mms->binary->hostname: {}",
@@ -162,7 +181,13 @@ void CatraMMSAPI::login(string userName, string password, string clientIPAddress
 				", apiTimeoutInSeconds: {}",
 				url, _apiTimeoutInSeconds
 			);
-			json clientIPRoot = CurlWrapper::httpGetJson(url, _apiTimeoutInSeconds);
+			json clientIPRoot = CurlWrapper::httpGetJson(url, _apiTimeoutInSeconds, "", std::vector<string>(),
+				"", 0, 15, false,
+				_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
+				_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
+				_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
+				_httpVerbose
+			);
 			clientIPAddress = JsonPath(&clientIPRoot)["ip"].as<string>();
 			LOG_INFO(
 				"httpGetJson"
@@ -202,12 +227,16 @@ void CatraMMSAPI::login(string userName, string password, string clientIPAddress
 			", url: {}"
 			", _apiVerbose: {}"
 			", body: {}",
-			url, _apiVerbose, "..." // JSONUtils::toString(bodyRoot) commentato per evitare di mostrare la password
+			url, _httpVerbose, "..." // JSONUtils::toString(bodyRoot) commentato per evitare di mostrare la password
 		);
 		json mmsInfoRoot = CurlWrapper::httpPostStringAndGetJson(
 			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(userName, password), JSONUtils::toString(bodyRoot),
 			"application/json", std::vector<std::string>(), "", 0,
-			15, false, _apiVerbose
+			15, false,
+			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
+			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
+			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
+			_httpVerbose
 		);
 
 		userProfile = fillUserProfile(mmsInfoRoot);
@@ -267,8 +296,13 @@ pair<CatraMMSAPI::IngestionResult, vector<CatraMMSAPI::IngestionResult>> CatraMM
 		);
 		vector<string> otherHeaders;
 		json mmsInfoRoot = CurlWrapper::httpPostStringAndGetJson(
-			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
-			JSONUtils::toString(workflowRoot), "application/json", vector<string>(), "", _apiMaxRetries, 15, false // _outputToBeCompressed
+			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey),
+				currentWorkspaceDetails.apiKey), JSONUtils::toString(workflowRoot), "application/json",
+				vector<string>(), "", _apiMaxRetries, 15, false,
+				_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
+				_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
+				_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
+				_httpVerbose
 		);
 
 		IngestionResult workflowResult;
@@ -335,8 +369,12 @@ void CatraMMSAPI::ingestionBinary(int64_t addContentIngestionJobKey, const strin
 		string sResponse = CurlWrapper::httpPostFileSplittingInChunks(
 			url, _binaryTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey),
 			currentWorkspaceDetails.apiKey), pathFileName, chunkCompleted, "", _binaryMaxRetries,
-			_binaryTimeoutInSeconds
-		);
+			_binaryTimeoutInSeconds,
+			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
+			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
+			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
+			_httpVerbose
+	);
 	}
 	catch (exception &e)
 	{
@@ -387,7 +425,11 @@ vector<CatraMMSAPI::EncodingProfile> CatraMMSAPI::getEncodingProfiles(string con
 			otherHeaders.push_back("X-ResponseBodyCompressed: true");
 		json mmsInfoRoot = CurlWrapper::httpGetJson(
 			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
-			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
+			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed,
+			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
+			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
+			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
+			_httpVerbose
 		);
 
 		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
@@ -440,10 +482,14 @@ vector<CatraMMSAPI::EncodingProfilesSet> CatraMMSAPI::getEncodingProfilesSets(st
 		);
 		vector<string> otherHeaders;
 		if (_outputToBeCompressed)
-			otherHeaders.push_back("X-ResponseBodyCompressed: true");
+			otherHeaders.emplace_back("X-ResponseBodyCompressed: true");
 		json mmsInfoRoot = CurlWrapper::httpGetJson(
 			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
-			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
+			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed,
+			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
+			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
+			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
+			_httpVerbose
 		);
 
 		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
@@ -498,8 +544,13 @@ vector<CatraMMSAPI::EncodersPool> CatraMMSAPI::getEncodersPool(bool cacheAllowed
 		if (_outputToBeCompressed)
 			otherHeaders.push_back("X-ResponseBodyCompressed: true");
 		json mmsInfoRoot = CurlWrapper::httpGetJson(
-			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
-			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
+			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey),
+				currentWorkspaceDetails.apiKey),
+			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed,
+			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
+			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
+			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
+			_httpVerbose
 		);
 
 		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
@@ -563,7 +614,11 @@ vector<CatraMMSAPI::RTMPChannelConf> CatraMMSAPI::getRTMPChannelConf(string labe
 			otherHeaders.push_back("X-ResponseBodyCompressed: true");
 		json mmsInfoRoot = CurlWrapper::httpGetJson(
 			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
-			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
+			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed,
+			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
+			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
+			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
+			_httpVerbose
 		);
 
 		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
@@ -627,7 +682,11 @@ vector<CatraMMSAPI::SRTChannelConf> CatraMMSAPI::getSRTChannelConf(const string&
 			otherHeaders.emplace_back("X-ResponseBodyCompressed: true");
 		json mmsInfoRoot = CurlWrapper::httpGetJson(
 			url, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
-			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
+			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed,
+			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
+			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
+			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
+			_httpVerbose
 		);
 
 		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
@@ -746,7 +805,11 @@ pair<vector<CatraMMSAPI::Stream>, int16_t> CatraMMSAPI::getStreams(
 			otherHeaders.emplace_back("X-ResponseBodyCompressed: true");
 		json mmsInfoRoot = CurlWrapper::httpGetJson(
 			apiUrl, _apiTimeoutInSeconds, CurlWrapper::basicAuthorization(std::format("{}", userProfile.userKey), currentWorkspaceDetails.apiKey),
-			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed
+			otherHeaders, "", _apiMaxRetries, 15, _outputToBeCompressed,
+			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
+			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
+			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
+			_httpVerbose
 		);
 
 		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
