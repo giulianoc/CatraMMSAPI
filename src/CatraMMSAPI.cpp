@@ -70,6 +70,13 @@ CatraMMSAPI::CatraMMSAPI(json &configurationRoot) : userProfile(), currentWorksp
 		_proxyPassword
 	);
 
+	_httpSSLVersion = JsonPath(&configurationRoot)["mms"]["httpSSLVersion"].as<string>("");
+	LOG_DEBUG(
+		"Configuration item"
+		", mms->httpSSLVersion: {}",
+		_httpSSLVersion
+	);
+
 	_apiProtocol = JsonPath(&configurationRoot)["mms"]["api"]["protocol"].as<string>("https");
 	LOG_DEBUG(
 		"Configuration item"
@@ -186,7 +193,7 @@ void CatraMMSAPI::login(string userName, string password, string clientIPAddress
 				_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
 				_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
 				_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
-				_httpVerbose
+				_httpSSLVersion.empty() ? std::nullopt : std::optional(_httpSSLVersion), _httpVerbose
 			);
 			clientIPAddress = JsonPath(&clientIPRoot)["ip"].as<string>();
 			LOG_INFO(
@@ -236,7 +243,7 @@ void CatraMMSAPI::login(string userName, string password, string clientIPAddress
 			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
 			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
 			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
-			_httpVerbose
+			_httpSSLVersion, _httpVerbose
 		);
 
 		userProfile = fillUserProfile(mmsInfoRoot);
@@ -302,7 +309,7 @@ pair<CatraMMSAPI::IngestionResult, vector<CatraMMSAPI::IngestionResult>> CatraMM
 				_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
 				_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
 				_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
-				_httpVerbose
+				_httpSSLVersion, _httpVerbose
 		);
 
 		IngestionResult workflowResult;
@@ -373,7 +380,7 @@ void CatraMMSAPI::ingestionBinary(int64_t addContentIngestionJobKey, const strin
 			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
 			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
 			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
-			_httpVerbose
+			_httpSSLVersion, _httpVerbose
 	);
 	}
 	catch (exception &e)
@@ -429,7 +436,7 @@ vector<CatraMMSAPI::EncodingProfile> CatraMMSAPI::getEncodingProfiles(string con
 			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
 			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
 			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
-			_httpVerbose
+			_httpSSLVersion, _httpVerbose
 		);
 
 		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
@@ -489,7 +496,7 @@ vector<CatraMMSAPI::EncodingProfilesSet> CatraMMSAPI::getEncodingProfilesSets(st
 			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
 			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
 			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
-			_httpVerbose
+			_httpSSLVersion, _httpVerbose
 		);
 
 		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
@@ -550,7 +557,7 @@ vector<CatraMMSAPI::EncodersPool> CatraMMSAPI::getEncodersPool(bool cacheAllowed
 			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
 			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
 			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
-			_httpVerbose
+			_httpSSLVersion, _httpVerbose
 		);
 
 		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
@@ -618,7 +625,7 @@ vector<CatraMMSAPI::RTMPChannelConf> CatraMMSAPI::getRTMPChannelConf(string labe
 			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
 			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
 			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
-			_httpVerbose
+			_httpSSLVersion, _httpVerbose
 		);
 
 		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
@@ -686,7 +693,7 @@ vector<CatraMMSAPI::SRTChannelConf> CatraMMSAPI::getSRTChannelConf(const string&
 			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
 			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
 			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
-			_httpVerbose
+			_httpSSLVersion, _httpVerbose
 		);
 
 		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();
@@ -809,7 +816,7 @@ pair<vector<CatraMMSAPI::Stream>, int16_t> CatraMMSAPI::getStreams(
 			_proxyURL.empty() ? std::nullopt : std::optional(_proxyURL),
 			_proxyUsername.empty() ? std::nullopt : std::optional(_proxyUsername),
 			_proxyPassword.empty() ? std::nullopt : std::optional(_proxyPassword),
-			_httpVerbose
+			_httpSSLVersion, _httpVerbose
 		);
 
 		json responseRoot = JsonPath(&mmsInfoRoot)["response"].as<json>();

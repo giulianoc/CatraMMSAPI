@@ -288,6 +288,7 @@ class CatraMMSAPI
 	int32_t _statisticsTimeoutInSeconds;
 	int32_t _deliveryMaxRetries;
 	bool _httpVerbose;
+	std::string _httpSSLVersion;
 	std::string _proxyURL;
 	std::string _proxyUsername;
 	std::string _proxyPassword;
