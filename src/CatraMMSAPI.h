@@ -85,7 +85,7 @@ class CatraMMSAPI
 		bool editEncodersPool;
 		bool applicationRecorder;
 		bool appUploadMediaContent;
-		bool appCaptureScreenAndProxy;
+		bool appCaptureAndProxy;
 		bool appStreamAndProxy;
 
 		// this field is used by the GUI
